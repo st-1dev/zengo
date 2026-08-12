@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package zengo.options;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "zengo/platform/api/zengo/options;options";
+
+extend google.protobuf.MethodOptions {
+  KafkaProduce produce = 50001;
+  KafkaConsume consume = 50002;
+}
+
+message KafkaProduce {
+  string topic = 1;
+  string event = 2;
+}
+
+message KafkaConsume {
+  string topic = 1;
+  string group = 2;
+}

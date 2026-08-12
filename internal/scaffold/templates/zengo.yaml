@@ -1,0 +1,44 @@
+service:
+  name: {{SERVICE_NAME}}
+  module: {{MODULE}}
+
+transports:
+  grpc:
+    port: 9090
+    # tls:
+    #   cert:
+    #     path: secrets/tls/tls.crt
+    #   key:
+    #     path: secrets/tls/tls.key
+  rest:
+    port: 8080
+    # tls:
+    #   cert:
+    #     path: secrets/tls/tls.crt
+    #   key:
+    #     path: secrets/tls/tls.key
+    # grpc_client_tls:
+    #   ca:
+    #     path: secrets/tls/ca.crt
+    #   server_name: grpc.internal
+
+db:
+  postgres:
+    queries: queries/
+
+queue:
+  kafka:
+    brokers_from_config: kafka
+    brokers:
+      - localhost:9092
+
+observability:
+  metrics: true
+  tracing: true
+  health: true
+  tracing_config_from: tracing
+  logging_config_from: logging
+
+auth:
+  enabled: false
+  api_keys: {}

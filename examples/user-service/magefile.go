@@ -1,0 +1,215 @@
+//go:build mage
+
+package main
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+)
+
+const (
+	serviceName = "user-service"
+	platformDir = "../.."
+)
+
+// Gen regenerates service code and local generated artifacts.
+func Gen() error {
+	err := Tools()
+	if err != nil {
+		return err
+	}
+	err = run(".", platformEnv(), "buf", "dep", "update")
+	if err != nil {
+		return err
+	}
+	err = run(".", platformEnv(), "buf", "generate", "--path", "api")
+	if err != nil {
+		return err
+	}
+	err = run(".", platformEnv(), "sqlc", "generate")
+	if err != nil {
+		return err
+	}
+	return run(".", platformEnv(), platformBinary("zengo"), "gen", "--skip-buf", "--skip-main")
+}
+
+// Build regenerates artifacts and builds the example service binary.
+func Build() error {
+	err := Gen()
+	if err != nil {
+		return err
+	}
+	err = ensureDir("bin")
+	if err != nil {
+		return err
+	}
+	return run(".", platformEnv(), "go", "build", "-ldflags", buildInfoLDFlags("."), "-o", filepath.Join("bin", serviceName), "./cmd")
+}
+
+// Run builds and runs the example service binary.
+func Run() error {
+	err := Build()
+	if err != nil {
+		return err
+	}
+	return run(".", platformEnv(), filepath.Join(".", "bin", serviceName))
+}
+
+// Test runs the example module test suite.
+func Test() error {
+	return run(".", platformEnv(), "go", "test", "./...")
+}
+
+// Check runs the platform freshness and verification flow for the example service.
+func Check() error {
+	err := Tools()
+	if err != nil {
+		return err
+	}
+	return run(".", platformEnv(), platformBinary("zengo"), "check", "--breaking")
+}
+
+// Dev starts the platform development loop for the example service.
+func Dev() error {
+	err := Tools()
+	if err != nil {
+		return err
+	}
+	return run(".", platformEnv(), platformBinary("zengo"), "dev")
+}
+
+// Up starts the example service local infrastructure stack.
+func Up() error {
+	err := Tools()
+	if err != nil {
+		return err
+	}
+	return run(".", platformEnv(), platformBinary("zengo"), "up")
+}
+
+// Down stops the example service local infrastructure stack.
+func Down() error {
+	err := Tools()
+	if err != nil {
+		return err
+	}
+	return run(".", platformEnv(), platformBinary("zengo"), "up", "--down")
+}
+
+// Tools rebuilds the platform CLI and protoc plugins required by the example.
+func Tools() error {
+	err := ensureDir(filepath.Join(platformDir, ".bin"))
+	if err != nil {
+		return err
+	}
+	err = run(platformDir, platformEnv(), "go", "build", "-o", "./.bin/protoc-gen-go-zz", "./cmd/protoc-gen-go-zz")
+	if err != nil {
+		return err
+	}
+	err = run(filepath.Join(platformDir, "api"), platformEnv(), "buf", "generate", "--template", "zengo/buf.gen.yaml", "--path", "zengo")
+	if err != nil {
+		return err
+	}
+	err = run(platformDir, platformEnv(), "go", "build", "-o", "./.bin/protoc-gen-zengo", "./cmd/protoc-gen-zengo")
+	if err != nil {
+		return err
+	}
+	err = run(platformDir, platformEnv(), "go", "build", "-o", "./.bin/protoc-gen-openapiv2", "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2")
+	if err != nil {
+		return err
+	}
+	return run(platformDir, platformEnv(), "go", "build", "-o", "./.bin/zengo", "./cmd/zengo")
+}
+
+// Deps tidies the example and platform Go module dependencies.
+func Deps() error {
+	err := run(".", platformEnv(), "go", "mod", "tidy")
+	if err != nil {
+		return err
+	}
+	return run(platformDir, platformEnv(), "go", "mod", "tidy")
+}
+
+func buildInfoLDFlags(dir string) string {
+	version := gitValue(dir, "describe", "--tags", "--always", "--dirty")
+	branch := gitValue(dir, "rev-parse", "--abbrev-ref", "HEAD")
+	return fmt.Sprintf("-X zengo/platform/sdk/buildinfo.Version=%s -X zengo/platform/sdk/buildinfo.Branch=%s", version, branch)
+}
+
+func gitValue(dir string, args ...string) string {
+	cmd := exec.Command("git", args...)
+	cmd.Dir = dir
+	out, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func platformBinary(name string) string {
+	return filepath.Join(platformDir, ".bin", name)
+}
+
+func platformEnv() []string {
+	pathParts := []string{absPath(filepath.Join(platformDir, ".bin"))}
+	gopathBin := strings.TrimSpace(goEnv("GOPATH"))
+	if gopathBin != "" {
+		pathParts = append(pathParts, filepath.Join(gopathBin, "bin"))
+	}
+	pathParts = append(pathParts, os.Getenv("PATH"))
+	env := os.Environ()
+	pathKey := "PATH=" + strings.Join(pathParts, string(os.PathListSeparator))
+	replaced := false
+	for i, item := range env {
+		if strings.HasPrefix(item, "PATH=") {
+			env[i] = pathKey
+			replaced = true
+			break
+		}
+	}
+	if !replaced {
+		env = append(env, pathKey)
+	}
+	return env
+}
+
+func goEnv(name string) string {
+	out, err := exec.Command("go", "env", name).Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func ensureDir(dir string) error {
+	return os.MkdirAll(dir, 0o755)
+}
+
+func absPath(path string) string {
+	if filepath.IsAbs(path) {
+		return path
+	}
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return path
+	}
+	return abs
+}
+
+func run(dir string, env []string, name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	cmd.Dir = dir
+	if env != nil {
+		cmd.Env = env
+	}
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("%s %s: %w", name, strings.Join(args, " "), err)
+	}
+	return nil
+}

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package zengo.config.meta;
+option go_package = "zengo/platform/api/config/meta";
+
+// Shared config metadata.
+//
+// Type contains the metadata fields shared by typed config documents.
+message Type {
+  // Config kind.
+  //
+  // kind is the logical config kind used by the loader, for example "postgres".
+  string kind = 1;
+
+  // Config API version.
+  //
+  // api_version identifies the document version used for compatibility over time.
+  optional string api_version = 2;
+}

@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package user.v1;
+
+option go_package = "github.com/zengo/user-service/gen/api/v1/user;userv1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "zengo/options/kafka.proto";
+import "zengo/options/repository.proto";
+
+service UserService {
+  option (zengo.options.repository) = {entity: "user", table: "users"};
+
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {get: "/v1/users/{id}"};
+  }
+
+  rpc ListUsers(google.protobuf.Empty) returns (ListUsersResponse) {
+    option (google.api.http) = {get: "/v1/users"};
+  }
+
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {post: "/v1/users", body: "*"};
+    option (zengo.options.produce) = {topic: "user.events", event: "user.created"};
+  }
+}
+
+service UserEventHandler {
+  rpc OnUserCreated(UserCreatedEvent) returns (google.protobuf.Empty) {
+    option (zengo.options.consume) = {topic: "user.events", group: "user-service"};
+  }
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+}
+
+message CreateUserRequest {
+  string email = 1;
+  string name = 2;
+}
+
+message CreateUserResponse {
+  User user = 1;
+}
+
+message UserCreatedEvent {
+  string api_version = 1;
+  User user = 2;
+}

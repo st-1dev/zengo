@@ -1,0 +1,55 @@
+package {{HANDLER_PKG}}
+
+import (
+	"context"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
+
+	"{{MODULE}}/gen/zengo"
+	hub "{{MODULE}}/gen/api/hub/{{HANDLER_PKG}}"
+	"zengo/platform/sdk/transport/queue/kafka"
+	"zengo/platform/sdk/router"
+)
+
+type Handler struct {
+	hub.Unimplemented{{HANDLER_TITLE}}ServiceServer
+	hub.Unimplemented{{HANDLER_TITLE}}EventHandlerServer
+}
+
+func NewHandler(repo *Repository, producer *kafka.Producer, brokers []string) *Handler {
+	_ = repo
+	_ = producer
+	_ = brokers
+	return &Handler{}
+}
+
+func (h *Handler) Get{{HANDLER_TITLE}}(ctx context.Context, req *hub.Get{{HANDLER_TITLE}}Request) (*hub.Get{{HANDLER_TITLE}}Response, error) {
+	_ = ctx
+	return nil, status.Errorf(codes.Unimplemented, "implement Get{{HANDLER_TITLE}} for %q", req.GetId())
+}
+
+func (h *Handler) List{{HANDLER_TITLE}}s(ctx context.Context, _ *emptypb.Empty) (*hub.List{{HANDLER_TITLE}}sResponse, error) {
+	_ = ctx
+	return &hub.List{{HANDLER_TITLE}}sResponse{}, nil
+}
+
+func (h *Handler) Create{{HANDLER_TITLE}}(ctx context.Context, req *hub.Create{{HANDLER_TITLE}}Request) (*hub.Create{{HANDLER_TITLE}}Response, error) {
+	_ = ctx
+	_ = req
+	return nil, status.Errorf(codes.Unimplemented, "implement Create{{HANDLER_TITLE}}")
+}
+
+func (h *Handler) On{{HANDLER_TITLE}}Created(ctx context.Context, event *hub.{{HANDLER_TITLE}}CreatedEvent) (*emptypb.Empty, error) {
+	_ = ctx
+	_ = event.GetApiVersion()
+	return &emptypb.Empty{}, nil
+}
+
+func RegisterKafka(consumer *kafka.Consumer, deps zengo.Dependencies, hubHandler hub.{{HANDLER_TITLE}}EventHandlerServer) error {
+	_ = hubHandler
+	return zengo.RegisterKafka(consumer, deps, func(ctx context.Context, env router.EventEnvelope) error {
+		return nil
+	})
+}

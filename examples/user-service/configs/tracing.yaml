@@ -1,0 +1,6 @@
+kind: tracing
+api_version: v1
+spec:
+  endpoint: localhost:4317
+  protocol: 1  # GRPC (0=unspecified, 1=GRPC, 2=HTTP)
+  sampling_ratio: 1.0

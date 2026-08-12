@@ -1,0 +1,27 @@
+service:
+  name: search-service
+  module: github.com/zengo/search-service
+
+transports:
+  grpc:
+    port: 9092
+  rest:
+    port: 8082
+
+cache:
+  redis:
+    config_from: redis
+
+observability:
+  metrics: true
+  tracing: true
+  health: true
+  tracing_config_from: tracing
+  logging_config_from: logging
+
+auth:
+  enabled: false
+  api_keys: {}
+
+compatibility:
+  legacy_versions: ENABLED

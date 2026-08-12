@@ -1,0 +1,8 @@
+-- name: List{{HANDLER_TITLE}}s :many
+SELECT id, name FROM {{HANDLER_PKG}}s ORDER BY id;
+
+-- name: Get{{HANDLER_TITLE}} :one
+SELECT id, name FROM {{HANDLER_PKG}}s WHERE id = $1;
+
+-- name: Create{{HANDLER_TITLE}} :one
+INSERT INTO {{HANDLER_PKG}}s (id, name) VALUES ($1, $2) RETURNING id, name;

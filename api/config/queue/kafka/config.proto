@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package zengo.config.kafka;
+option go_package = "zengo/platform/api/config/queue/kafka";
+
+import "config/meta/tls.proto";
+
+// Kafka config document.
+//
+// Config is the typed Kafka configuration loaded by the platform runtime.
+message Config {
+  // Config kind.
+  //
+  // kind is the logical config kind used by the loader.
+  string kind = 1;
+  // Config API version.
+  //
+  // api_version identifies the document version used for compatibility over time.
+  string api_version = 2;
+  // Kafka settings.
+  //
+  // spec contains the Kafka client settings consumed by the runtime.
+  Spec spec = 3;
+}
+
+// Kafka settings.
+//
+// Spec configures Kafka broker connectivity and client identity.
+message Spec {
+  // Broker list.
+  //
+  // brokers lists Kafka brokers used by producers and consumers.
+  repeated string brokers = 1;
+  // Client identifier.
+  //
+  // client_id is the optional Kafka client identifier.
+  string client_id = 2;
+  // Consumer group.
+  //
+  // group_id is the optional default consumer group identifier.
+  optional string group_id = 3;
+  // TLS settings.
+  //
+  // tls configures TLS and optional mTLS for Kafka broker connections.
+  zengo.config.meta.ClientTLS tls = 4;
+}

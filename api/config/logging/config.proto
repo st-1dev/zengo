@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package zengo.config.logger;
+option go_package = "zengo/platform/api/config/logging";
+
+// Logging config document.
+//
+// Config is the typed logging configuration loaded by the platform runtime.
+message Config {
+  // Config kind.
+  //
+  // kind is the logical config kind used by the loader.
+  string kind = 1;
+
+  // Config API version.
+  //
+  // api_version identifies the document version used for compatibility over time.
+  string api_version = 2;
+
+  // Logging settings.
+  //
+  // spec contains the logger settings consumed by the runtime.
+  Spec spec = 3;
+}
+
+// Logging settings.
+//
+// Spec configures runtime logger behavior.
+message Spec {
+  // Logging mode.
+  //
+  // Mode controls whether logging is configured for production or development.
+  enum Mode {
+    PROD = 0;
+    DEV = 1;
+  }
+
+  // Selected mode.
+  //
+  // mode selects the runtime logging mode. The zero value behaves like PROD.
+  optional Mode mode = 3;
+
+  // Log level.
+  //
+  // Level controls the minimum log level emitted by the runtime.
+  enum Level {
+    DISABLE = 0;
+    DEBUG = 1;
+    INFO = 2;
+    WARN = 3;
+    ERROR = 4;
+    PANIC = 5;
+    FATAL = 6;
+  }
+
+  // Selected level.
+  //
+  // level selects the minimum emitted log level.
+  optional Level level = 1;
+
+  // Log encoding.
+  //
+  // Encoding controls the log output format.
+  enum Encoding {
+    JSON = 0;
+    TEXT = 1;
+  }
+
+  // Selected encoding.
+  //
+  // encoding selects the log output format.
+  optional Encoding encoding = 2;
+
+  // Caller flag.
+  //
+  // enable_caller includes file and function information in log records.
+  optional bool enable_caller = 4;
+
+  // Stack trace flag.
+  //
+  // enable_stack_trace includes stack traces for supported log records.
+  optional bool enable_stack_trace = 5;
+
+  // Log file path.
+  //
+  // log_file_path redirects logs to a file instead of standard output when set.
+  optional string log_file_path = 6;
+}

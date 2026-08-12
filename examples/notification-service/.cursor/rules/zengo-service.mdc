@@ -1,0 +1,10 @@
+---
+description: Zengo service development conventions for notification-service
+globs: "**/*.{go,proto,sql,yaml,yml,textproto,pbtxt}"
+---
+- Business logic lives only in internal/**/handler.go (hub API).
+- Edit only api/hub/ for active API development; api/vN/ directories are frozen legacy contracts.
+- Never edit files under gen/.
+- Run zengo gen or mage gen after changing .proto, queries, or zengo manifest/config files.
+- configs/* and zengo.* accept YAML or prototext (.textproto/.pbtxt); schema is defined in proto.
+- Canonical postgres config kind is postgres.

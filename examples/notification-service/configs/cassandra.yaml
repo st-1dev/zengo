@@ -1,0 +1,7 @@
+# Schema: api/config/db/cassandra/config.proto
+kind: cassandra
+api_version: v1
+spec:
+  hosts:
+    - localhost:9042
+  keyspace: system

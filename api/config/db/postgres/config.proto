@@ -1,0 +1,156 @@
+syntax = "proto3";
+
+package zengo.config.db.postgres;
+option go_package = "zengo/platform/api/config/db/postgres";
+
+import "config/meta/tls.proto";
+import "google/protobuf/duration.proto";
+
+// PostgreSQL config document.
+//
+// Config is the typed PostgreSQL configuration loaded by the platform runtime.
+message Config {
+  // Config kind.
+  //
+  // kind is the logical config kind used by the loader.
+  string kind = 1;
+
+  // Config API version.
+  //
+  // api_version identifies the document version used for compatibility over time.
+  string api_version = 2;
+
+  // PostgreSQL settings.
+  //
+  // spec contains the PostgreSQL connection settings consumed by the runtime.
+  Spec spec = 3;
+}
+
+// PostgreSQL settings.
+//
+// Spec configures PostgreSQL connectivity and optional migration behavior.
+message Spec {
+  // Database access mode.
+  //
+  // Mode describes the intended database access pattern for the service.
+  enum Mode {
+    RO = 0;
+    RW = 1;
+  }
+
+  // Access mode.
+  //
+  // mode selects read-only or read-write access semantics for the connection.
+  Mode mode = 1;
+
+  // Database host.
+  //
+  // host is the database host or IP address.
+  string host = 2;
+
+  // Database port.
+  //
+  // port is the PostgreSQL port. When omitted, clients default to 5432.
+  optional int32 port = 3;
+
+  // Database name.
+  //
+  // db_name is the database name used for the connection.
+  string db_name = 4;
+
+  // Database user.
+  //
+  // user_name is the database user used for the connection.
+  string user_name = 5;
+
+  // Database password.
+  //
+  // password is the database password. It may be empty.
+  optional string password = 6;
+
+  // TLS mode.
+  //
+  // SSLMode controls TLS behavior for PostgreSQL connections.
+  enum SSLMode {
+    DISABLE = 0;
+    PREFER = 1;
+    ALLOW = 2;
+    REQUIRE = 3;
+    VERIFY_CA = 4;
+    VERIFY_FULL = 5;
+  }
+
+  // Selected TLS mode.
+  //
+  // ssl_mode selects PostgreSQL TLS behavior. The zero value is DISABLE.
+  optional SSLMode ssl_mode = 7;
+
+  // Search path schemas.
+  //
+  // schemas lists schema names appended to the search path in order.
+  repeated string schemas = 8;
+
+  // Service name.
+  //
+  // service_name is an optional logical service name for logs and metrics.
+  optional string service_name = 9;
+
+  // Metrics flag.
+  //
+  // enable_metrics enables database metrics collection when supported.
+  bool enable_metrics = 10;
+
+  // Connection tuning.
+  //
+  // connection fine-tunes pool sizing and connection lifetimes.
+  optional Connection connection = 11;
+
+  // Migration settings.
+  //
+  // migration configures migration source paths when the service applies migrations.
+  optional Migration migration = 12;
+  // TLS settings.
+  //
+  // tls configures CA and client-certificate material used together with ssl_mode.
+  zengo.config.meta.ClientTLS tls = 13;
+}
+
+// PostgreSQL connection tuning.
+//
+// Connection configures PostgreSQL pool sizing and connection lifetimes.
+message Connection {
+  // Maximum idle connections.
+  //
+  // max_idle is the maximum number of idle connections kept by the client.
+  uint32 max_idle = 1;
+
+  // Minimum open connections.
+  //
+  // min_open is the minimum number of open connections kept by the client.
+  uint32 min_open = 2;
+
+  // Maximum open connections.
+  //
+  // max_open is the maximum number of open connections allowed by the client.
+  uint32 max_open = 3;
+
+  // Maximum connection lifetime.
+  //
+  // max_life_time is the maximum lifetime of a single connection.
+  google.protobuf.Duration max_life_time = 4;
+
+  // Maximum idle time.
+  //
+  // max_idle_time is the maximum time a connection may remain idle.
+  google.protobuf.Duration max_idle_time = 5;
+}
+
+// Migration locations.
+//
+// Migration lists migration locations used by the service.
+message Migration {
+  // Migration paths.
+  //
+  // paths lists directories that contain migration files.
+  repeated string paths = 1;
+}

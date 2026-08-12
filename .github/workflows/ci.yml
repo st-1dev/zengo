@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: platform
+            module: .
+          - name: user-service
+            module: examples/user-service
+          - name: search-service
+            module: examples/search-service
+          - name: notification-service
+            module: examples/notification-service
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.26.x
+          cache-dependency-path: |
+            go.sum
+            examples/user-service/go.sum
+            examples/search-service/go.sum
+            examples/notification-service/go.sum
+
+      - name: Vet
+        working-directory: ${{ matrix.module }}
+        run: go vet ./...
+
+      - name: Test with race detector
+        working-directory: ${{ matrix.module }}
+        run: go test -race -shuffle=on ./...
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.11.4
+          working-directory: ${{ matrix.module }}
+          args: --config=${{ github.workspace }}/.golangci.yml --timeout=5m
+
+  vulnerability:
+    name: Vulnerability scan (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: platform
+            module: .
+          - name: user-service
+            module: examples/user-service
+          - name: search-service
+            module: examples/search-service
+          - name: notification-service
+            module: examples/notification-service
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.26.x
+          cache-dependency-path: |
+            go.sum
+            examples/user-service/go.sum
+            examples/search-service/go.sum
+            examples/notification-service/go.sum
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.2.0
+
+      - name: Scan
+        working-directory: ${{ matrix.module }}
+        run: govulncheck ./...
+
+  generation:
+    name: Generation freshness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.26.x
+          cache-dependency-path: |
+            go.sum
+            examples/user-service/go.sum
+            examples/search-service/go.sum
+            examples/notification-service/go.sum
+
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.70.0
+
+      - name: Install generation tools
+        run: |
+          go install github.com/magefile/mage@v1.17.1
+          go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
+          go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.29.0
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.2
+
+      - name: Regenerate platform and examples
+        run: |
+          mage gen
+          mage -d examples/search-service gen
+          mage -d examples/notification-service gen
+
+      - name: Verify golden snapshots
+        run: go test ./internal/versioning -run Golden -count=1
+
+      - name: Verify clean generation
+        run: git diff --exit-code

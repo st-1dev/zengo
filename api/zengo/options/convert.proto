@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package zengo.options;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "zengo/platform/api/zengo/options;options";
+
+// Legacy field mapping option.
+//
+// field_map adds legacy field-name metadata to protobuf field options.
+extend google.protobuf.FieldOptions {
+  FieldMap field_map = 50004;
+}
+
+// Conversion policy option.
+//
+// convert adds conversion policy metadata to protobuf message options.
+extend google.protobuf.MessageOptions {
+  ConvertPolicy convert = 50005;
+}
+
+// Legacy field mapping.
+//
+// FieldMap configures legacy field-name mapping for conversion generation.
+message FieldMap {
+  // Legacy field name.
+  //
+  // legacy_name is the field name expected by the legacy API contract.
+  string legacy_name = 1;
+}
+
+// Conversion policy.
+//
+// ConvertPolicy configures whether message conversion may be generated automatically.
+message ConvertPolicy {
+  // Conversion mode.
+  //
+  // Mode controls whether conversion is automatic or requires manual code.
+  enum Mode {
+    AUTO = 0;
+    MANUAL = 1;
+  }
+
+  // Selected mode.
+  //
+  // mode selects the conversion strategy.
+  Mode mode = 1;
+  // Manual conversion file.
+  //
+  // manual_file points to the service-local file that implements manual conversion.
+  string manual_file = 2;
+}

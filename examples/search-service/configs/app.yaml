@@ -1,0 +1,5 @@
+kind: app
+api_version: v1
+spec:
+  user_service_grpc_addr: 127.0.0.1:9090
+  cache_ttl: 300s

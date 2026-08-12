@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package zengo.config.nats;
+option go_package = "zengo/platform/api/config/queue/nats";
+
+import "config/meta/tls.proto";
+import "google/protobuf/duration.proto";
+
+// NATS config document.
+//
+// Config is the typed NATS configuration loaded by the platform runtime.
+message Config {
+  // Config kind.
+  //
+  // kind is the logical config kind used by the loader.
+  string kind = 1;
+  // Config API version.
+  //
+  // api_version identifies the document version used for compatibility over time.
+  string api_version = 2;
+  // NATS settings.
+  //
+  // spec contains the NATS connection settings consumed by the runtime.
+  Spec spec = 3;
+}
+
+// NATS settings.
+//
+// Spec configures NATS connectivity and reconnect behavior.
+message Spec {
+  // Server URLs.
+  //
+  // urls lists one or more NATS server URLs.
+  repeated string urls = 1;
+  // Client name.
+  //
+  // name is the optional logical client name.
+  optional string name = 2;
+  // Auth token.
+  //
+  // token is the optional token used for authentication.
+  optional string token = 3;
+  // Username.
+  //
+  // username is the optional username used for authentication.
+  optional string username = 4;
+  // Password.
+  //
+  // password is the optional password used for authentication.
+  optional string password = 5;
+  // TLS settings.
+  //
+  // tls configures TLS and optional mTLS for the client connection.
+  zengo.config.meta.ClientTLS tls = 6;
+  // Reconnect limit.
+  //
+  // max_reconnects bounds reconnect attempts before the client gives up.
+  optional int32 max_reconnects = 7;
+  // Connect timeout.
+  //
+  // connect_timeout bounds initial connection attempts.
+  optional google.protobuf.Duration connect_timeout = 8;
+}

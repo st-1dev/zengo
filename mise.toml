@@ -1,0 +1,14 @@
+[tools]
+go = "1.26.1"
+buf = "latest"
+
+[env]
+_.path = ["{{ config_root }}/.bin"]
+
+[tasks.build-tools]
+description = "Build zengo CLI and protoc plugins"
+run = "go run github.com/magefile/mage zengo"
+
+[tasks.check]
+description = "Run platform + example checks"
+run = "go run github.com/magefile/mage check"

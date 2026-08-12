@@ -1,0 +1,9 @@
+kind: postgres
+api_version: v1
+spec:
+  host: localhost
+  port: 5432
+  db_name: users
+  user_name: postgres
+  password: postgres
+  enable_metrics: true

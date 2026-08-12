@@ -1,0 +1,333 @@
+syntax = "proto3";
+
+package zengo.manifest;
+
+option go_package = "zengo/platform/api/zengo/manifest;manifestpb";
+
+import "config/meta/tls.proto";
+
+// Service manifest.
+//
+// Manifest is the top-level service infrastructure manifest loaded from zengo.* files.
+message Manifest {
+  // Service identity.
+  //
+  // service identifies the service repository and module path.
+  Service service = 1;
+  // Network transports.
+  //
+  // transports declares the network transports exposed by the service process.
+  Transports transports = 2;
+  // Observability settings.
+  //
+  // observability configures metrics, tracing, and health features.
+  Observability observability = 5;
+  // Auth settings.
+  //
+  // auth configures optional API-key authentication.
+  Auth auth = 6;
+  reserved 7;
+  // Database integrations.
+  //
+  // db declares database integrations used by the service.
+  DB db = 8;
+  // Queue integrations.
+  //
+  // queue declares messaging integrations used by the service.
+  Queue queue = 9;
+  // Compatibility settings.
+  //
+  // compatibility controls legacy version compatibility generation.
+  Compatibility compatibility = 10;
+  // Cache integrations.
+  //
+  // cache declares cache integrations used by the service.
+  Cache cache = 11;
+  // Storage integrations.
+  //
+  // storage declares object storage integrations used by the service.
+  Storage storage = 12;
+}
+
+// Service identity.
+//
+// Service identifies a service repository.
+message Service {
+  // Service name.
+  //
+  // name is the logical service name used by generators and runtime helpers.
+  string name = 1;
+  // Go module path.
+  //
+  // module is the Go module path for the service repository.
+  string module = 2;
+}
+
+// Network transports.
+//
+// Transports declares network-facing transports exposed by the service process.
+message Transports {
+  // gRPC transport.
+  //
+  // grpc configures the gRPC transport when present.
+  GRPC grpc = 1;
+  // REST transport.
+  //
+  // rest configures the grpc-gateway REST transport when present.
+  REST rest = 2;
+}
+
+// gRPC transport settings.
+//
+// GRPC configures the gRPC transport.
+message GRPC {
+  // Listen port.
+  //
+  // port is the gRPC listen port.
+  int32 port = 1;
+  // TLS settings.
+  //
+  // tls configures server-side TLS and optional mTLS for the gRPC listener.
+  zengo.config.meta.ServerTLS tls = 2;
+}
+
+// REST transport settings.
+//
+// REST configures the REST transport.
+message REST {
+  // Listen port.
+  //
+  // port is the HTTP listen port.
+  int32 port = 1;
+  // TLS settings.
+  //
+  // tls configures server-side TLS and optional mTLS for the REST listener.
+  zengo.config.meta.ServerTLS tls = 2;
+  // Gateway gRPC client TLS.
+  //
+  // grpc_client_tls configures TLS used by grpc-gateway when it dials the local gRPC listener.
+  zengo.config.meta.ClientTLS grpc_client_tls = 3;
+}
+
+// Database integrations.
+//
+// DB groups relational and wide-column database integrations.
+message DB {
+  // PostgreSQL integration.
+  //
+  // postgres configures PostgreSQL integration.
+  PostgresDB postgres = 1;
+  // Cassandra integration.
+  //
+  // cassandra configures Cassandra integration.
+  CassandraDB cassandra = 2;
+  // Oracle integration.
+  //
+  // oracle configures Oracle integration.
+  OracleDB oracle = 3;
+}
+
+// PostgreSQL integration settings.
+//
+// PostgresDB configures PostgreSQL integration.
+message PostgresDB {
+  // Config source kind.
+  //
+  // config_from overrides the typed config kind to load. The default kind is postgres.
+  string config_from = 1;
+  // Query directory.
+  //
+  // queries points to the sqlc query directory.
+  string queries = 2;
+}
+
+// Cassandra integration settings.
+//
+// CassandraDB configures Cassandra integration.
+message CassandraDB {
+  // Config source kind.
+  //
+  // config_from overrides the typed config kind to load.
+  string config_from = 1;
+  // Keyspace name.
+  //
+  // keyspace is the logical Cassandra keyspace used by the service.
+  string keyspace = 2;
+  // CQL directory.
+  //
+  // cql points to the CQL query directory.
+  string cql = 3;
+}
+
+// Oracle integration settings.
+//
+// OracleDB configures Oracle integration.
+message OracleDB {
+  // Config source kind.
+  //
+  // config_from overrides the typed config kind to load.
+  string config_from = 1;
+  // Query directory.
+  //
+  // queries points to the sqlc query directory.
+  string queries = 2;
+}
+
+// Queue integrations.
+//
+// Queue groups message broker integrations.
+message Queue {
+  // Kafka integration.
+  //
+  // kafka configures Kafka integration.
+  Kafka kafka = 1;
+  // NATS integration.
+  //
+  // nats configures NATS integration.
+  Nats nats = 2;
+  // RabbitMQ integration.
+  //
+  // rabbitmq configures RabbitMQ integration.
+  RabbitMQ rabbitmq = 3;
+}
+
+// Cache integrations.
+//
+// Cache groups cache integrations.
+message Cache {
+  // Redis integration.
+  //
+  // redis configures Redis integration.
+  Redis redis = 1;
+}
+
+// Storage integrations.
+//
+// Storage groups object storage integrations.
+message Storage {
+  // S3 integration.
+  //
+  // s3 configures S3-compatible storage integration.
+  S3 s3 = 1;
+}
+
+// Kafka integration settings.
+//
+// Kafka configures Kafka integration.
+message Kafka {
+  // Broker config kind.
+  //
+  // brokers_from_config overrides the typed config kind to load.
+  string brokers_from_config = 1;
+  // Fallback brokers.
+  //
+  // brokers supplies manifest-level fallback broker addresses.
+  repeated string brokers = 2;
+}
+
+// RabbitMQ integration settings.
+//
+// RabbitMQ configures RabbitMQ integration.
+message RabbitMQ {
+  // Config source kind.
+  //
+  // config_from overrides the typed config kind to load.
+  string config_from = 1;
+  // Fallback URLs.
+  //
+  // urls supplies manifest-level fallback connection URLs.
+  repeated string urls = 2;
+}
+
+// Redis integration settings.
+//
+// Redis configures Redis integration.
+message Redis {
+  // Config source kind.
+  //
+  // config_from overrides the typed config kind to load.
+  string config_from = 1;
+}
+
+// NATS integration settings.
+//
+// Nats configures NATS integration.
+message Nats {
+  // Config source kind.
+  //
+  // config_from overrides the typed config kind to load.
+  string config_from = 1;
+  // Fallback URLs.
+  //
+  // urls supplies manifest-level fallback server URLs.
+  repeated string urls = 2;
+}
+
+// S3 integration settings.
+//
+// S3 configures S3-compatible object storage integration.
+message S3 {
+  // Config source kind.
+  //
+  // config_from overrides the typed config kind to load.
+  string config_from = 1;
+}
+
+// Observability settings.
+//
+// Observability configures runtime observability features.
+message Observability {
+  // Metrics flag.
+  //
+  // metrics enables metrics collection and the /metrics endpoint.
+  bool metrics = 1;
+  // Tracing flag.
+  //
+  // tracing enables distributed tracing.
+  bool tracing = 2;
+  // Health flag.
+  //
+  // health enables readiness checks in generated runtime wiring.
+  bool health = 3;
+  // Tracing config kind.
+  //
+  // tracing_config_from overrides the tracing config kind to load.
+  string tracing_config_from = 4;
+  // Logging config kind.
+  //
+  // logging_config_from overrides the logging config kind to load.
+  string logging_config_from = 5;
+}
+
+// Auth settings.
+//
+// Auth configures API-key authentication.
+message Auth {
+  // Enabled flag.
+  //
+  // enabled toggles the auth layer on or off.
+  bool enabled = 1;
+  // API keys.
+  //
+  // api_keys maps logical names to API key values.
+  map<string, string> api_keys = 2;
+}
+
+// Compatibility settings.
+//
+// Compatibility controls whether discovered legacy versions participate in generation.
+message Compatibility {
+  // Legacy generation mode.
+  //
+  // Mode controls whether legacy compatibility generation is enabled.
+  enum Mode {
+    UNSPECIFIED = 0;
+    DISABLED = 1;
+    ENABLED = 2;
+  }
+
+  // Legacy version mode.
+  //
+  // legacy_versions controls whether discovered legacy versions are generated.
+  Mode legacy_versions = 1;
+}

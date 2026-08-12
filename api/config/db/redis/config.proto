@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package zengo.config.redis;
+option go_package = "zengo/platform/api/config/db/redis";
+
+import "config/meta/tls.proto";
+import "google/protobuf/duration.proto";
+
+// Redis config document.
+//
+// Config is the typed Redis configuration loaded by the platform runtime.
+message Config {
+  // Config kind.
+  //
+  // kind is the logical config kind used by the loader.
+  string kind = 1;
+  // Config API version.
+  //
+  // api_version identifies the document version used for compatibility over time.
+  string api_version = 2;
+  // Redis settings.
+  //
+  // spec contains the Redis connection settings consumed by the runtime.
+  Spec spec = 3;
+}
+
+// Redis settings.
+//
+// Spec configures Redis connectivity and client tuning.
+message Spec {
+  // Redis URL.
+  //
+  // url is a Redis URL, for example redis://:password@localhost:6379/0.
+  optional string url = 1;
+
+  // Redis addresses.
+  //
+  // addrs lists cluster or sentinel addresses when url is empty.
+  repeated string addrs = 2;
+
+  // Database index.
+  //
+  // db is the logical Redis database index.
+  optional int32 db = 3;
+  // Redis username.
+  //
+  // username is the optional Redis username used for authentication.
+  optional string username = 4;
+  // Redis password.
+  //
+  // password is the optional Redis password used for authentication.
+  optional string password = 5;
+  // TLS settings.
+  //
+  // tls configures TLS and optional mTLS for Redis connections.
+  zengo.config.meta.ClientTLS tls = 6;
+  // Pool size.
+  //
+  // pool_size overrides the client connection pool size.
+  optional int32 pool_size = 7;
+  // Dial timeout.
+  //
+  // dial_timeout bounds initial connection attempts.
+  optional google.protobuf.Duration dial_timeout = 8;
+  // Read timeout.
+  //
+  // read_timeout bounds socket read operations.
+  optional google.protobuf.Duration read_timeout = 9;
+}

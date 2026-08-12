@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package zengo.options;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "zengo/platform/api/zengo/options;options";
+
+// Repository service option.
+//
+// repository attaches repository-generation metadata to protobuf services.
+extend google.protobuf.ServiceOptions {
+  Repository repository = 50003;
+}
+
+// Repository generation settings.
+//
+// Repository configures repository code generation metadata.
+message Repository {
+  // Entity name.
+  //
+  // entity is the logical entity name used by generated repository helpers.
+  string entity = 1;
+  // Table name.
+  //
+  // table is the primary database table name used by generated repository helpers.
+  string table = 2;
+  // Persistence model.
+  //
+  // model names the hub proto message in the same file that defines the
+  // canonical database schema for baseline migration generation.
+  string model = 3;
+}

@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package search.v1;
+
+option go_package = "github.com/zengo/search-service/gen/api/v1/search;searchv1";
+
+import "google/api/annotations.proto";
+
+service SearchService {
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {get: "/v1/users/{id}"};
+  }
+
+  rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse) {
+    option (google.api.http) = {get: "/v1/users:search"};
+  }
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  string display_name = 4;
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message SearchUsersRequest {
+  string query = 1;
+}
+
+message SearchUsersResponse {
+  repeated User users = 1;
+}

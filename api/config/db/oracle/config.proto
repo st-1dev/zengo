@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package zengo.config.db.oracle;
+
+option go_package = "zengo/platform/api/config/db/oracle";
+
+import "config/meta/tls.proto";
+
+// Oracle config document.
+//
+// Config is the typed Oracle configuration loaded by the platform runtime.
+message Config {
+  // Config kind.
+  //
+  // kind is the logical config kind used by the loader.
+  string kind = 1;
+  // Config API version.
+  //
+  // api_version identifies the document version used for compatibility over time.
+  string api_version = 2;
+  // Oracle settings.
+  //
+  // spec contains the Oracle connection settings consumed by the runtime.
+  Spec spec = 3;
+}
+
+// Oracle settings.
+//
+// Spec configures Oracle connectivity for service runtime components.
+message Spec {
+  // Oracle host.
+  //
+  // host is the Oracle database host or IP address.
+  string host = 1;
+  // Oracle port.
+  //
+  // port is the Oracle listener port. When omitted, clients default to 1521.
+  optional int32 port = 2;
+  // Oracle service name.
+  //
+  // service_name is the Oracle service name used by the client.
+  string service_name = 3;
+  // Oracle user.
+  //
+  // user_name is the Oracle user used for the connection.
+  string user_name = 4;
+  // Oracle password.
+  //
+  // password is the optional Oracle password used for authentication.
+  optional string password = 5;
+  // TLS settings.
+  //
+  // tls configures TLS and optional mTLS for Oracle connections.
+  zengo.config.meta.ClientTLS tls = 6;
+}

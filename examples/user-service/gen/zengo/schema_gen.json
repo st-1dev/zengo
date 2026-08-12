@@ -1,0 +1,47 @@
+{
+  "repositories": [
+    {
+      "file": "api/hub/user/service.proto",
+      "package": "user.hub",
+      "service": "UserService",
+      "entity": "user",
+      "table": "users",
+      "model": "UserRecord",
+      "columns": [
+        {
+          "proto_field": "id",
+          "name": "id",
+          "sql_type": "TEXT",
+          "primary_key": true,
+          "nullable": false,
+          "unique": false
+        },
+        {
+          "proto_field": "email",
+          "name": "email",
+          "sql_type": "TEXT",
+          "primary_key": false,
+          "nullable": false,
+          "unique": true
+        },
+        {
+          "proto_field": "name",
+          "name": "name",
+          "sql_type": "TEXT",
+          "primary_key": false,
+          "nullable": false,
+          "unique": false
+        },
+        {
+          "proto_field": "created_at",
+          "name": "created_at",
+          "sql_type": "TIMESTAMPTZ",
+          "primary_key": false,
+          "nullable": false,
+          "unique": false,
+          "default_sql": "NOW()"
+        }
+      ]
+    }
+  ]
+}

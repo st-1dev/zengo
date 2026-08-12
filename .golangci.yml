@@ -1,0 +1,104 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  enable:
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - copyloopvar
+    - durationcheck
+    - errcheck
+    - errname
+    - errorlint
+    - fatcontext
+    - forcetypeassert
+    - gocritic
+    - gosec
+    - govet
+    - ineffassign
+    - loggercheck
+    - misspell
+    - modernize
+    - nilerr
+    - noctx
+    - nolintlint
+    - predeclared
+    - revive
+    - rowserrcheck
+    - sloglint
+    - sqlclosecheck
+    - staticcheck
+    - thelper
+    - unused
+    - usetesting
+  settings:
+    errcheck:
+      check-type-assertions: true
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+  exclusions:
+    generated: lax
+    paths:
+      - internal/versioning/testdata/golden
+    rules:
+      - linters:
+          - gosec
+        text: "G301|G306"
+      - path: "_test\\.go"
+        linters:
+          - gosec
+        text: "G122|G204|G304|G703"
+      - path: "^(cmd/zengo|internal/(codegen|cqlgen|generator|manifest|versioning)|pkg/sdk/config/storage/local)/"
+        linters:
+          - gosec
+        text: "G122|G304|G703"
+      - path: "^(cmd/zengo|internal/generator/main_test\\.go)"
+        linters:
+          - gosec
+        text: "G204"
+
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - golines
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - internal/versioning/testdata/golden
+  settings:
+    gofmt:
+      # Simplify code: gofmt with `-s` option.
+      simplify: true
+      # Apply the rewrite rules to the source before reformatting.
+      # https://pkg.go.dev/cmd/gofmt
+      # Default: []
+      rewrite-rules:
+        - pattern: 'interface{}'
+          replacement: 'any'
+        - pattern: 'a[b:len(a)]'
+          replacement: 'a[b:]'
+    gofumpt:
+      # Choose whether to use the extra rules.
+      # Default: false
+      extra-rules: true
+    golines:
+      # Target maximum line length.
+      max-len: 120
+      # Length of a tabulation.
+      tab-len: 4
+      # Shorten single-line comments.
+      shorten-comments: true
+      reformat-tags: true
+      # Split chained methods on the dots as opposed to the arguments.
+      chain-split-dots: true

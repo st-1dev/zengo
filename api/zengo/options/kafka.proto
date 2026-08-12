@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package zengo.options;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "zengo/platform/api/zengo/options;options";
+
+// Kafka method options.
+//
+// produce and consume attach Kafka metadata to protobuf RPC methods.
+extend google.protobuf.MethodOptions {
+  KafkaProduce produce = 50001;
+  KafkaConsume consume = 50002;
+}
+
+// Kafka producer settings.
+//
+// KafkaProduce configures the Kafka topic and event kind emitted by an RPC.
+message KafkaProduce {
+  // Topic name.
+  //
+  // topic is the Kafka topic used by the generated publisher.
+  string topic = 1;
+  // Event kind.
+  //
+  // event is the logical event kind written into the envelope.
+  string event = 2;
+}
+
+// Kafka consumer settings.
+//
+// KafkaConsume configures the Kafka topic and consumer group handled by an RPC.
+message KafkaConsume {
+  // Topic name.
+  //
+  // topic is the Kafka topic consumed by the generated handler.
+  string topic = 1;
+  // Consumer group.
+  //
+  // group is the Kafka consumer group used by the generated handler.
+  string group = 2;
+}

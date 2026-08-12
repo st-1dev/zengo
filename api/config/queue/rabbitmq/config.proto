@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package zengo.config.rabbitmq;
+
+option go_package = "zengo/platform/api/config/queue/rabbitmq";
+
+import "config/meta/tls.proto";
+import "google/protobuf/duration.proto";
+
+// RabbitMQ config document.
+//
+// Config is the typed RabbitMQ configuration loaded by the platform runtime.
+message Config {
+  // Config kind.
+  //
+  // kind is the logical config kind used by the loader.
+  string kind = 1;
+  // Config API version.
+  //
+  // api_version identifies the document version used for compatibility over time.
+  string api_version = 2;
+  // RabbitMQ settings.
+  //
+  // spec contains the RabbitMQ connection settings consumed by the runtime.
+  Spec spec = 3;
+}
+
+// RabbitMQ settings.
+//
+// Spec configures RabbitMQ connectivity.
+message Spec {
+  // AMQP URLs.
+  //
+  // urls lists one or more AMQP connection URLs.
+  repeated string urls = 1;
+  // Virtual host.
+  //
+  // vhost is the optional RabbitMQ virtual host.
+  optional string vhost = 2;
+  // Username.
+  //
+  // username is the optional RabbitMQ username used for authentication.
+  optional string username = 3;
+  // Password.
+  //
+  // password is the optional RabbitMQ password used for authentication.
+  optional string password = 4;
+  // Connect timeout.
+  //
+  // connect_timeout bounds initial connection attempts.
+  optional google.protobuf.Duration connect_timeout = 5;
+  // TLS settings.
+  //
+  // tls configures TLS and optional mTLS for AMQP connections.
+  zengo.config.meta.ClientTLS tls = 6;
+}

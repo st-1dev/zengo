@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package user.hub;
+
+option go_package = "github.com/zengo/user-service/gen/api/hub/user;userhub";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "zengo/options/column.proto";
+import "zengo/options/kafka.proto";
+import "zengo/options/repository.proto";
+
+service UserService {
+  option (zengo.options.repository) = {
+    entity: "user"
+    table: "users"
+    model: "UserRecord"
+  };
+
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {get: "/users/{id}"};
+  }
+
+  rpc ListUsers(google.protobuf.Empty) returns (ListUsersResponse) {
+    option (google.api.http) = {get: "/users"};
+  }
+
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {post: "/users", body: "*"};
+    option (zengo.options.produce) = {topic: "user.events", event: "user.created"};
+  }
+}
+
+service UserEventHandler {
+  rpc OnUserCreated(UserCreatedEvent) returns (google.protobuf.Empty) {
+    option (zengo.options.consume) = {topic: "user.events", group: "user-service"};
+  }
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  string display_name = 4;
+}
+
+message UserRecord {
+  string id = 1 [(zengo.options.column) = {primary_key: true}];
+  string email = 2 [(zengo.options.column) = {unique: true}];
+  string name = 3;
+  google.protobuf.Timestamp created_at = 4 [(zengo.options.column) = {default_sql: "NOW()"}];
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+}
+
+message CreateUserRequest {
+  string email = 1;
+  string name = 2;
+  string display_name = 3;
+}
+
+message CreateUserResponse {
+  User user = 1;
+}
+
+message UserCreatedEvent {
+  string api_version = 1;
+  User user = 2;
+}

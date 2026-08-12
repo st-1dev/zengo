@@ -1,0 +1,34 @@
+service:
+  name: user-service
+  module: github.com/zengo/user-service
+
+transports:
+  grpc:
+    port: 9090
+  rest:
+    port: 8080
+
+db:
+  postgres:
+    queries: queries/
+
+queue:
+  kafka:
+    brokers_from_config: kafka
+    brokers:
+      - localhost:9092
+
+observability:
+  metrics: true
+  tracing: true
+  health: true
+  tracing_config_from: tracing
+  logging_config_from: logging
+
+auth:
+  enabled: false
+  api_keys:
+    dev: dev-token
+
+compatibility:
+  legacy_versions: ENABLED

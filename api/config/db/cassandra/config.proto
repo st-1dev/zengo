@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package zengo.config.cassandra;
+option go_package = "zengo/platform/api/config/db/cassandra";
+
+import "config/meta/tls.proto";
+
+// Cassandra config document.
+//
+// Config is the typed Cassandra configuration loaded by the platform runtime.
+message Config {
+  // Config kind.
+  //
+  // kind is the logical config kind used by the loader.
+  string kind = 1;
+  // Config API version.
+  //
+  // api_version identifies the document version used for compatibility over time.
+  string api_version = 2;
+  // Cassandra settings.
+  //
+  // spec contains the Cassandra connection settings consumed by the runtime.
+  Spec spec = 3;
+}
+
+// Cassandra settings.
+//
+// Spec configures Cassandra connectivity for service runtime components.
+message Spec {
+  // Cassandra hosts.
+  //
+  // hosts lists the Cassandra nodes used by the client.
+  repeated string hosts = 1;
+  // Cassandra keyspace.
+  //
+  // keyspace is the logical Cassandra keyspace used by the service.
+  string keyspace = 2;
+  // Cassandra username.
+  //
+  // username is the optional Cassandra username used for authentication.
+  optional string username = 3;
+  // Cassandra password.
+  //
+  // password is the optional Cassandra password used for authentication.
+  optional string password = 4;
+  // TLS settings.
+  //
+  // tls configures TLS and optional mTLS for Cassandra connections.
+  zengo.config.meta.ClientTLS tls = 5;
+}

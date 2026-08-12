@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package zengo.options;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "zengo/platform/api/zengo/options;options";
+
+extend google.protobuf.ServiceOptions {
+  Repository repository = 50003;
+}
+
+message Repository {
+  string entity = 1;
+  string table = 2;
+  string model = 3;
+}

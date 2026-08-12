@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package zengo.config.meta;
+option go_package = "zengo/platform/api/config/meta";
+
+// TLS material source.
+//
+// TLSMaterial identifies a TLS artifact either by filesystem path or by inline PEM content.
+message TLSMaterial {
+  oneof source {
+    // PEM file path.
+    //
+    // path points to a PEM file on disk.
+    string path = 1;
+    // Inline PEM data.
+    //
+    // inline_pem stores PEM content directly inside the config document.
+    string inline_pem = 2;
+  }
+}
+
+// Client TLS settings.
+//
+// ClientTLS configures client-side TLS and optional mTLS for outgoing connections.
+message ClientTLS {
+  // Trusted CA bundle.
+  //
+  // ca supplies the CA certificates used to verify the remote server.
+  TLSMaterial ca = 1;
+  // Client certificate.
+  //
+  // cert supplies the client certificate for mTLS when the upstream requires it.
+  TLSMaterial cert = 2;
+  // Client private key.
+  //
+  // key supplies the private key that matches cert.
+  TLSMaterial key = 3;
+  // TLS server name.
+  //
+  // server_name overrides the expected server name used during certificate verification.
+  string server_name = 4;
+  // Skip verification flag.
+  //
+  // insecure_skip_verify disables remote certificate verification.
+  bool insecure_skip_verify = 5;
+}
+
+// Server TLS settings.
+//
+// ServerTLS configures server-side TLS and optional client-certificate verification.
+message ServerTLS {
+  // Client auth mode.
+  //
+  // ClientAuth controls whether the server requests or requires client certificates.
+  enum ClientAuth {
+    NONE = 0;
+    VERIFY_IF_GIVEN = 1;
+    REQUIRE_AND_VERIFY = 2;
+  }
+
+  // Server certificate.
+  //
+  // cert supplies the leaf server certificate presented to clients.
+  TLSMaterial cert = 1;
+  // Server private key.
+  //
+  // key supplies the private key that matches cert.
+  TLSMaterial key = 2;
+  // Certificate chain bundle.
+  //
+  // ca optionally appends additional PEM certificates to the served chain.
+  TLSMaterial ca = 3;
+  // Trusted client CA bundle.
+  //
+  // client_ca supplies the CA certificates used to verify client certificates during mTLS.
+  TLSMaterial client_ca = 4;
+  // TLS server name.
+  //
+  // server_name is reserved for environments that need an explicit logical TLS name.
+  string server_name = 5;
+  // Client auth policy.
+  //
+  // client_auth selects whether client certificates are optional, verified when present, or required.
+  ClientAuth client_auth = 6;
+}

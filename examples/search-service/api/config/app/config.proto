@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package search.config.app;
+
+option go_package = "github.com/zengo/search-service/gen/api/config/app;appcfg";
+
+import "google/protobuf/duration.proto";
+
+message Config {
+  string kind = 1;
+  string api_version = 2;
+  Spec spec = 3;
+}
+
+message Spec {
+  string user_service_grpc_addr = 1;
+  google.protobuf.Duration cache_ttl = 2;
+}

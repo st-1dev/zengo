@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package zengo.options;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "zengo/platform/api/zengo/options;options";
+
+// Repository column option.
+//
+// column adds persistence column metadata to protobuf field options.
+extend google.protobuf.FieldOptions {
+  Column column = 50006;
+}
+
+// Repository column settings.
+//
+// Column configures how a proto field maps to a generated Postgres column.
+message Column {
+  // Column name override.
+  //
+  // name overrides the default snake_case column name derived from the field.
+  string name = 1;
+  // SQL type override.
+  //
+  // sql_type overrides the inferred Postgres column type.
+  string sql_type = 2;
+  // Primary key marker.
+  //
+  // primary_key marks the field as the single table primary key.
+  bool primary_key = 3;
+  // Nullable marker.
+  //
+  // nullable allows the generated column to omit NOT NULL.
+  bool nullable = 4;
+  // Unique marker.
+  //
+  // unique adds a UNIQUE constraint to the generated column.
+  bool unique = 5;
+  // SQL default expression.
+  //
+  // default_sql is copied verbatim into the generated DEFAULT clause.
+  string default_sql = 6;
+  // Ignore marker.
+  //
+  // ignore excludes the field from generated schema metadata.
+  bool ignore = 7;
+}

@@ -1,0 +1,26 @@
+service:
+  name: notification-service
+  module: github.com/zengo/notification-service
+
+transports:
+  grpc:
+    port: 9091
+  rest:
+    port: 8081
+
+queue:
+  kafka:
+    brokers_from_config: kafka
+    brokers:
+      - localhost:9092
+
+observability:
+  metrics: true
+  tracing: true
+  health: true
+  tracing_config_from: tracing
+  logging_config_from: logging
+
+auth:
+  enabled: false
+  api_keys: {}

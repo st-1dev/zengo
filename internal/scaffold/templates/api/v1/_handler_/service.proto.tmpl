@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package {{HANDLER_PKG}}.v1;
+
+option go_package = "{{MODULE}}/gen/api/v1/{{HANDLER_PKG}};{{HANDLER_PKG}}v1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "zengo/options/repository.proto";
+
+// Frozen legacy contract — do not edit. Use zengo version freeze to create new versions.
+
+service {{HANDLER_TITLE}}Service {
+  option (zengo.options.repository) = {entity: "{{HANDLER_PKG}}", table: "{{HANDLER_PKG}}s"};
+
+  rpc Get{{HANDLER_TITLE}}(Get{{HANDLER_TITLE}}Request) returns (Get{{HANDLER_TITLE}}Response) {
+    option (google.api.http) = {get: "/v1/{{HANDLER_PKG}}s/{id}"};
+  }
+
+  rpc List{{HANDLER_TITLE}}s(google.protobuf.Empty) returns (List{{HANDLER_TITLE}}sResponse) {
+    option (google.api.http) = {get: "/v1/{{HANDLER_PKG}}s"};
+  }
+}
+
+message {{HANDLER_TITLE}} {
+  string id = 1;
+  string name = 2;
+}
+
+message Get{{HANDLER_TITLE}}Request {
+  string id = 1;
+}
+
+message Get{{HANDLER_TITLE}}Response {
+  {{HANDLER_TITLE}} {{HANDLER_PKG}} = 1;
+}
+
+message List{{HANDLER_TITLE}}sResponse {
+  repeated {{HANDLER_TITLE}} {{HANDLER_PKG}}s = 1;
+}

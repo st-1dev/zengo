@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package zengo.config.s3;
+option go_package = "zengo/platform/api/config/storage/s3";
+
+import "config/meta/tls.proto";
+import "google/protobuf/duration.proto";
+
+// S3 config document.
+//
+// Config is the typed S3-compatible storage configuration loaded by the platform runtime.
+message Config {
+  // Config kind.
+  //
+  // kind is the logical config kind used by the loader.
+  string kind = 1;
+  // Config API version.
+  //
+  // api_version identifies the document version used for compatibility over time.
+  string api_version = 2;
+  // S3 settings.
+  //
+  // spec contains the S3 client settings consumed by the runtime.
+  Spec spec = 3;
+}
+
+// S3 settings.
+//
+// Spec configures S3-compatible object storage access.
+message Spec {
+  // Default bucket.
+  //
+  // bucket is the default bucket used by helpers when operations do not override it.
+  optional string bucket = 1;
+
+  // AWS region.
+  //
+  // region is the AWS region passed to the SDK.
+  optional string region = 2;
+  // Custom endpoint.
+  //
+  // endpoint overrides the default AWS endpoint, for example for MinIO.
+  optional string endpoint = 3;
+  // Access key ID.
+  //
+  // access_key_id is the optional static access key for the SDK.
+  optional string access_key_id = 4;
+  // Secret access key.
+  //
+  // secret_access_key is the optional static secret key for the SDK.
+  optional string secret_access_key = 5;
+  // Session token.
+  //
+  // session_token is the optional static session token for the SDK.
+  optional string session_token = 6;
+
+  // Path-style flag.
+  //
+  // force_path_style is required for MinIO and some on-prem S3-compatible stores.
+  optional bool force_path_style = 7;
+  // TLS settings.
+  //
+  // tls configures TLS and optional mTLS when the endpoint supports it.
+  zengo.config.meta.ClientTLS tls = 8;
+  // Object key prefix.
+  //
+  // prefix is the default object key prefix used by helpers.
+  optional string prefix = 9;
+  // Request timeout.
+  //
+  // request_timeout bounds SDK HTTP requests.
+  optional google.protobuf.Duration request_timeout = 10;
+}

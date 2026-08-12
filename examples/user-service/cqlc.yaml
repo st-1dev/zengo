@@ -1,0 +1,11 @@
+version: "1"
+packages:
+  - name: cql
+    path: cql/
+    queries:
+      - cql/user.cql
+    schema: cql/schema.cql
+    gen:
+      go:
+        package: cqlgen
+        out: gen/cql

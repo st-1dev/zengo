@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package zengo.options;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "zengo/platform/api/zengo/options;options";
+
+extend google.protobuf.FieldOptions {
+  FieldMap field_map = 50004;
+}
+
+extend google.protobuf.MessageOptions {
+  ConvertPolicy convert = 50005;
+}
+
+message FieldMap {
+  string legacy_name = 1;
+}
+
+message ConvertPolicy {
+  enum Mode {
+    AUTO = 0;
+    MANUAL = 1;
+  }
+  Mode mode = 1;
+  string manual_file = 2;
+}

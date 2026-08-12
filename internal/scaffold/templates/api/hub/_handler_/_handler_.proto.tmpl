@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package hub.{{HANDLER_PKG}};
+
+option go_package = "{{MODULE}}/gen/api/hub/{{HANDLER_PKG}};{{HANDLER_PKG}}";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "third_party/zengo/options/kafka.proto";
+import "third_party/zengo/options/repository.proto";
+
+message {{HANDLER_TITLE}} {
+  string id = 1;
+  string name = 2;
+}
+
+message Get{{HANDLER_TITLE}}Request {
+  string id = 1;
+}
+
+message Get{{HANDLER_TITLE}}Response {
+  {{HANDLER_TITLE}} {{HANDLER_PKG}} = 1;
+}
+
+message List{{HANDLER_TITLE}}sResponse {
+  repeated {{HANDLER_TITLE}} {{HANDLER_PKG}}s = 1;
+}
+
+message Create{{HANDLER_TITLE}}Request {
+  string name = 1;
+}
+
+message Create{{HANDLER_TITLE}}Response {
+  {{HANDLER_TITLE}} {{HANDLER_PKG}} = 1;
+}
+
+message {{HANDLER_TITLE}}CreatedEvent {
+  string api_version = 1;
+  {{HANDLER_TITLE}} {{HANDLER_PKG}} = 2;
+}
+
+service {{HANDLER_TITLE}}Service {
+  option (zengo.options.repository) = {
+    entity: "{{HANDLER_TITLE}}"
+    table: "{{HANDLER_PKG}}s"
+  };
+
+  rpc Get{{HANDLER_TITLE}}(Get{{HANDLER_TITLE}}Request) returns (Get{{HANDLER_TITLE}}Response) {
+    option (google.api.http) = {
+      get: "/v1/{{HANDLER_PKG}}s/{id}"
+    };
+  }
+
+  rpc List{{HANDLER_TITLE}}s(google.protobuf.Empty) returns (List{{HANDLER_TITLE}}sResponse) {
+    option (google.api.http) = {
+      get: "/v1/{{HANDLER_PKG}}s"
+    };
+  }
+
+  rpc Create{{HANDLER_TITLE}}(Create{{HANDLER_TITLE}}Request) returns (Create{{HANDLER_TITLE}}Response) {
+    option (google.api.http) = {
+      post: "/v1/{{HANDLER_PKG}}s"
+      body: "*"
+    };
+    option (zengo.options.produce) = {
+      topic: "{{HANDLER_PKG}}.events"
+      event: "{{HANDLER_PKG}}.created"
+    };
+  }
+}
+
+service {{HANDLER_TITLE}}EventHandler {
+  rpc On{{HANDLER_TITLE}}Created({{HANDLER_TITLE}}CreatedEvent) returns (google.protobuf.Empty) {
+    option (zengo.options.consume) = {
+      topic: "{{HANDLER_PKG}}.events"
+      group: "{{SERVICE_NAME}}"
+    };
+  }
+}

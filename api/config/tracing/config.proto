@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package zengo.config.tracing;
+option go_package = "zengo/platform/api/config/tracing";
+
+import "config/meta/tls.proto";
+
+// Tracing config document.
+//
+// Config is the typed tracing configuration loaded by the platform runtime.
+message Config {
+  // Config kind.
+  //
+  // kind is the logical config kind used by the loader.
+  string kind = 1;
+  // Config API version.
+  //
+  // api_version identifies the document version used for compatibility over time.
+  string api_version = 2;
+  // Tracing settings.
+  //
+  // spec contains the tracing exporter settings consumed by the runtime.
+  Spec spec = 3;
+}
+
+// Tracing settings.
+//
+// Spec configures tracing exporter connectivity and sampling.
+message Spec {
+  // OTLP endpoint.
+  //
+  // endpoint is the OTLP endpoint, for example localhost:4317 or localhost:4318.
+  optional string endpoint = 1;
+
+  // OTLP transport protocol.
+  //
+  // Protocol selects the OTLP transport protocol.
+  enum Protocol {
+    PROTOCOL_UNSPECIFIED = 0;
+    GRPC = 1;
+    HTTP = 2;
+  }
+
+  // Selected protocol.
+  //
+  // protocol selects the OTLP transport protocol.
+  optional Protocol protocol = 2;
+
+  // Sampling ratio.
+  //
+  // sampling_ratio is the trace sampling ratio in the range [0, 1].
+  optional double sampling_ratio = 3;
+
+  // TLS settings.
+  //
+  // tls configures TLS and optional mTLS for the OTLP exporter transport.
+  zengo.config.meta.ClientTLS tls = 4;
+}
