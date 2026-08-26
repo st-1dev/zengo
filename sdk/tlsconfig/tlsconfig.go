@@ -255,6 +255,12 @@ func validateServerOptions(opts *ServerOptions) error {
 	if opts == nil {
 		return nil
 	}
+	mode := effectiveClientAuth(opts.ClientAuth)
+	switch mode {
+	case ClientAuthNone, ClientAuthVerifyIfGiven, ClientAuthRequireAndVerify:
+	default:
+		return fmt.Errorf("unsupported server tls client auth mode %q", mode)
+	}
 	err := validateMaterial("cert", opts.Cert)
 	if err != nil {
 		return err
@@ -274,7 +280,7 @@ func validateServerOptions(opts *ServerOptions) error {
 	if opts.Cert == nil || opts.Key == nil {
 		return fmt.Errorf("server tls cert and key are required")
 	}
-	if effectiveClientAuth(opts.ClientAuth) != ClientAuthNone && opts.ClientCA == nil {
+	if mode != ClientAuthNone && opts.ClientCA == nil {
 		return fmt.Errorf("server tls client_ca is required when client auth is enabled")
 	}
 	return nil
