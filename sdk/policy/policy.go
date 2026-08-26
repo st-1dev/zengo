@@ -149,7 +149,9 @@ func (e *Executor) Do(ctx context.Context, fn func(context.Context) error) error
 
 // GRPCUnaryServerInterceptor applies Options to gRPC unary handlers.
 func GRPCUnaryServerInterceptor(opts Options) grpc.UnaryServerInterceptor {
-	exec := NewExecutor(opts)
+	serverOpts := opts
+	serverOpts.Retry.Attempts = 1
+	exec := NewExecutor(serverOpts)
 	return func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		var resp any
 		err := exec.Do(ctx, func(callCtx context.Context) error {
@@ -168,12 +170,15 @@ func GRPCUnaryServerInterceptor(opts Options) grpc.UnaryServerInterceptor {
 
 // HTTPMiddleware applies Options to an HTTP handler tree.
 func HTTPMiddleware(opts Options) func(http.Handler) http.Handler {
-	exec := NewExecutor(opts)
+	enabled := opts.Enabled()
+	serverOpts := opts
+	serverOpts.Retry.Attempts = 1
+	exec := NewExecutor(serverOpts)
 	return func(next http.Handler) http.Handler {
 		if next == nil {
 			return http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})
 		}
-		if !opts.Enabled() {
+		if !enabled {
 			return next
 		}
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

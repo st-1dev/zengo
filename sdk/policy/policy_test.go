@@ -56,26 +56,67 @@ func TestHTTPMiddlewareRateLimit(t *testing.T) {
 	}
 }
 
-func TestHTTPMiddlewareRetriesServerErrors(t *testing.T) {
+func TestHTTPMiddlewareDoesNotRetryServerErrors(t *testing.T) {
 	var calls int32
-	handler := HTTPMiddleware(
-		Options{Retry: Retry{Attempts: 2}},
-	)(
+	handler := HTTPMiddleware(Options{Retry: Retry{Attempts: 2}})(
 		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			if atomic.AddInt32(&calls, 1) == 1 {
-				http.Error(w, "retry", http.StatusInternalServerError)
-				return
-			}
-			w.WriteHeader(http.StatusCreated)
+			atomic.AddInt32(&calls, 1)
+			http.Error(w, "server failure", http.StatusInternalServerError)
 		}),
 	)
 
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/", nil))
-	if rr.Code != http.StatusCreated {
+	if rr.Code != http.StatusInternalServerError {
 		t.Fatalf("status = %d", rr.Code)
 	}
-	if calls != 2 {
+	if calls != 1 {
+		t.Fatalf("calls = %d", calls)
+	}
+}
+
+func TestHTTPMiddlewareKeepsRetryOnlyPolicyEnabled(t *testing.T) {
+	var calls int32
+	handler := HTTPMiddleware(Options{Retry: Retry{Attempts: 3}})(
+		http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+			atomic.AddInt32(&calls, 1)
+			panic("handler panic")
+		}),
+	)
+
+	rr := httptest.NewRecorder()
+	var escaped any
+	func() {
+		defer func() { escaped = recover() }()
+		handler.ServeHTTP(rr, httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/", nil))
+	}()
+	if escaped != nil {
+		t.Fatalf("panic escaped: %v", escaped)
+	}
+	if rr.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d", rr.Code)
+	}
+	if calls != 1 {
+		t.Fatalf("calls = %d", calls)
+	}
+}
+
+func TestGRPCUnaryServerInterceptorDoesNotRetryHandlers(t *testing.T) {
+	var calls int32
+	interceptor := GRPCUnaryServerInterceptor(Options{Retry: Retry{Attempts: 3}})
+	_, err := interceptor(
+		context.Background(),
+		"request",
+		nil,
+		func(context.Context, any) (any, error) {
+			atomic.AddInt32(&calls, 1)
+			return nil, grpcstatus.Error(codes.Unavailable, "temporarily unavailable")
+		},
+	)
+	if grpcstatus.Code(err) != codes.Unavailable {
+		t.Fatalf("code = %v", grpcstatus.Code(err))
+	}
+	if calls != 1 {
 		t.Fatalf("calls = %d", calls)
 	}
 }
