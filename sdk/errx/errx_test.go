@@ -3,9 +3,11 @@ package errx_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"zengo/platform/sdk/errx"
 
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
@@ -55,40 +57,107 @@ func TestWrapCapturesMessageAndPublicMessages(t *testing.T) {
 	}
 }
 
-func TestGRPCRoundTripPreservesDetails(t *testing.T) {
-	appErr := errx.Wrap(
-		errors.New("write timeout"),
+func newErrorWithInternalStackMarker() *errx.Error {
+	return errx.New(
 		codes.Unavailable,
-		"publish event",
+		"internal-message-secret-marker",
 		errx.Public("service temporarily unavailable"),
-		errx.Fields(errx.Field{Key: "topic", Value: "users"}, errx.Field{Key: "retryable", Value: "true"}),
+		errx.Fields(errx.Field{Key: "field-secret-marker", Value: "value-secret-marker"}),
 	)
-	roundTrip := errx.FromError(appErr.GRPCStatus().Err())
+}
 
-	gotCode := roundTrip.Code()
-	if gotCode != codes.Unavailable {
-		t.Fatalf("code = %v", gotCode)
+func TestGRPCStatusDoesNotExposeInternalDiagnostics(t *testing.T) {
+	appErr := newErrorWithInternalStackMarker()
+	if !strings.Contains(strings.Join(appErr.StackTrace(), "\n"), "newErrorWithInternalStackMarker") {
+		t.Fatal("expected locally captured stack marker")
 	}
-	gotPublicMessage := roundTrip.PublicMessage()
-	if gotPublicMessage != "service temporarily unavailable" {
-		t.Fatalf("public message = %q", gotPublicMessage)
+	if appErr.Message() != "internal-message-secret-marker" {
+		t.Fatalf("local message = %q", appErr.Message())
 	}
-	gotMessage := roundTrip.Message()
-	if gotMessage != "publish event" {
-		t.Fatalf("message = %q", gotMessage)
+	if fields := appErr.Fields(); len(fields) != 1 ||
+		fields[0] != (errx.Field{Key: "field-secret-marker", Value: "value-secret-marker"}) {
+		t.Fatalf("local fields = %#v", fields)
 	}
-	if len(roundTrip.StackTrace()) == 0 {
-		t.Fatal("expected stack trace")
+	st := appErr.GRPCStatus()
+	if st.Code() != codes.Unavailable {
+		t.Fatalf("code = %v", st.Code())
 	}
-	fields := roundTrip.Fields()
-	if len(fields) != 2 {
+	if st.Message() != "service temporarily unavailable" {
+		t.Fatalf("message = %q", st.Message())
+	}
+	var info *errdetails.ErrorInfo
+	for _, detail := range st.Details() {
+		switch typed := detail.(type) {
+		case *errdetails.ErrorInfo:
+			info = typed
+		case *errdetails.DebugInfo:
+			t.Fatalf("unexpected DebugInfo: %#v", typed)
+		default:
+			t.Fatalf("unexpected status detail: %T", typed)
+		}
+	}
+	if info == nil {
+		t.Fatal("expected ErrorInfo")
+	}
+	if info.Reason != "APPLICATION_ERROR" || info.Domain != "zengo.platform/sdk/errx" {
+		t.Fatalf("ErrorInfo = %#v", info)
+	}
+	if len(info.Metadata) != 0 {
+		t.Fatalf("metadata = %#v", info.Metadata)
+	}
+}
+
+func TestGRPCRoundTripPreservesPublicDetails(t *testing.T) {
+	roundTrip := errx.FromError(newErrorWithInternalStackMarker().GRPCStatus().Err())
+	if roundTrip.Code() != codes.Unavailable {
+		t.Fatalf("code = %v", roundTrip.Code())
+	}
+	if roundTrip.PublicMessage() != "service temporarily unavailable" {
+		t.Fatalf("public message = %q", roundTrip.PublicMessage())
+	}
+	if roundTrip.Message() != "service temporarily unavailable" {
+		t.Fatalf("message = %q", roundTrip.Message())
+	}
+	if fields := roundTrip.Fields(); len(fields) != 0 {
 		t.Fatalf("fields = %#v", fields)
 	}
-	if fields[0] != (errx.Field{Key: "retryable", Value: "true"}) {
-		t.Fatalf("field[0] = %#v", fields[0])
+	if stack := roundTrip.StackTrace(); len(stack) != 0 {
+		t.Fatalf("stack = %#v", stack)
 	}
-	if fields[1] != (errx.Field{Key: "topic", Value: "users"}) {
+}
+
+func TestFromErrorDecodesLegacyGRPCDetails(t *testing.T) {
+	st := grpcstatus.New(codes.InvalidArgument, "legacy public message")
+	legacy, err := st.WithDetails(
+		&errdetails.ErrorInfo{
+			Reason: "APPLICATION_ERROR",
+			Domain: "zengo.platform/sdk/errx",
+			Metadata: map[string]string{
+				"message":        "legacy internal message",
+				"public_message": "legacy public message",
+				"field.field":    "email",
+			},
+		},
+		&errdetails.DebugInfo{StackEntries: []string{"legacy stack entry"}, Detail: "legacy debug detail"},
+	)
+	if err != nil {
+		t.Fatalf("build legacy status: %v", err)
+	}
+	decoded := errx.FromError(legacy.Err())
+	if decoded.Code() != codes.InvalidArgument {
+		t.Fatalf("code = %v", decoded.Code())
+	}
+	if decoded.PublicMessage() != "legacy public message" {
+		t.Fatalf("public message = %q", decoded.PublicMessage())
+	}
+	if decoded.Message() != "legacy internal message" {
+		t.Fatalf("message = %q", decoded.Message())
+	}
+	if fields := decoded.Fields(); len(fields) != 1 || fields[0] != (errx.Field{Key: "field", Value: "email"}) {
 		t.Fatalf("fields = %#v", fields)
+	}
+	if stack := decoded.StackTrace(); len(stack) != 1 || stack[0] != "legacy stack entry" {
+		t.Fatalf("stack = %#v", stack)
 	}
 }
 
@@ -154,12 +223,15 @@ func TestUnaryClientInterceptorDecodesRemoteErrx(t *testing.T) {
 		t.Fatalf("public message = %q", gotPublicMessage)
 	}
 	gotMessage := appErr.Message()
-	if gotMessage != "validate create user request" {
+	if gotMessage != "invalid request" {
 		t.Fatalf("message = %q", gotMessage)
 	}
 	fields := appErr.Fields()
-	if len(fields) != 1 || fields[0] != (errx.Field{Key: "field", Value: "email"}) {
+	if len(fields) != 0 {
 		t.Fatalf("fields = %#v", fields)
+	}
+	if stack := appErr.StackTrace(); len(stack) != 0 {
+		t.Fatalf("stack = %#v", stack)
 	}
 }
 

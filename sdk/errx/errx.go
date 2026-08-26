@@ -306,38 +306,13 @@ func (e *Error) GRPCStatus() *grpcstatus.Status {
 	}
 	st := grpcstatus.New(normalizeCode(e.code), e.publicMessage)
 	withInfo, err := st.WithDetails(&errdetails.ErrorInfo{
-		Reason:   errorInfoReason,
-		Domain:   errorInfoDomain,
-		Metadata: fieldMetadata(e),
+		Reason: errorInfoReason,
+		Domain: errorInfoDomain,
 	})
 	if err != nil {
 		return st
 	}
-	if len(e.stack) > 0 || e.message != "" {
-		withDebug, err := withInfo.WithDetails(&errdetails.DebugInfo{
-			StackEntries: append([]string(nil), e.stack...),
-			Detail:       e.message,
-		})
-		if err != nil {
-			return withInfo
-		}
-		return withDebug
-	}
 	return withInfo
-}
-
-func fieldMetadata(e *Error) map[string]string {
-	metadata := map[string]string{
-		metadataMessage:       e.message,
-		metadataPublicMessage: e.publicMessage,
-	}
-	for _, field := range e.fields {
-		if field.Key == "" {
-			continue
-		}
-		metadata[metadataFieldPrefix+field.Key] = field.Value
-	}
-	return metadata
 }
 
 func applyOptions(opts []Option) options {
