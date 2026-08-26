@@ -114,3 +114,64 @@ func TestInitServiceNormalizesHandlerNames(t *testing.T) {
 		t.Fatalf("proto service name mismatch:\n%s", protoSrc)
 	}
 }
+
+func TestInitServiceRefusesNonEmptyTarget(t *testing.T) {
+	dir := t.TempDir()
+	sentinelPath := filepath.Join(dir, "go.mod")
+	want := "module existing\n"
+	if err := os.WriteFile(sentinelPath, []byte(want), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	err := InitService("demo-service", dir, InitOptions{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "not empty") {
+		t.Fatalf("error = %q", err)
+	}
+	got, err := os.ReadFile(sentinelPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != want {
+		t.Fatalf("go.mod = %q, want %q", got, want)
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 || entries[0].Name() != "go.mod" {
+		t.Fatalf("target entries = %v, want only go.mod", entries)
+	}
+}
+
+func TestInitServiceRefusesNonEmptyCurrentDirectory(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "existing.txt"), []byte("keep\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(dir)
+
+	err := InitService("demo-service", "", InitOptions{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 || entries[0].Name() != "existing.txt" {
+		t.Fatalf("target entries = %v, want only existing.txt", entries)
+	}
+}
+
+func TestInitServiceCreatesMissingTarget(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "service")
+	if err := InitService("demo-service", dir, InitOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "zengo.textproto")); err != nil {
+		t.Fatalf("expected zengo.textproto: %v", err)
+	}
+}

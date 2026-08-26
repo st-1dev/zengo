@@ -43,6 +43,15 @@ func ParseManifestFormat(raw string) (ManifestFormat, error) {
 
 // InitService creates a new service repository from embedded scaffold templates.
 func InitService(name, dir string, opts InitOptions) error {
+	targetDir := filepath.Clean(dir)
+	entries, err := os.ReadDir(targetDir)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("inspect init target %q: %w", targetDir, err)
+	}
+	if len(entries) > 0 {
+		return fmt.Errorf("init target %q is not empty", targetDir)
+	}
+
 	module := "github.com/zengo/" + name
 	manifestFormat := opts.ManifestFormat
 	if manifestFormat == "" {
@@ -74,7 +83,7 @@ func InitService(name, dir string, opts InitOptions) error {
 			return err
 		}
 		rel = strings.ReplaceAll(rel, "_handler_", handlerPkg)
-		target := filepath.Join(dir, replacer.Replace(rel))
+		target := filepath.Join(targetDir, replacer.Replace(rel))
 		if d.IsDir() {
 			return os.MkdirAll(target, 0o755)
 		}
