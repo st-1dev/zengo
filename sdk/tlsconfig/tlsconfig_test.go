@@ -11,6 +11,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -84,22 +85,54 @@ func TestClientConfigRejectsCertWithoutKey(t *testing.T) {
 	}
 }
 
-func TestServerConfigSupportsMTLS(t *testing.T) {
+func TestServerConfigSupportsClientAuthModes(t *testing.T) {
 	testCertPEM, testKeyPEM := selfSignedPEM(t)
-	cfg, err := ServerConfig(&ServerOptions{
+	tests := []struct {
+		name string
+		mode ClientAuthMode
+		want tls.ClientAuthType
+	}{
+		{name: "default", want: tls.NoClientCert},
+		{name: "none", mode: ClientAuthNone, want: tls.NoClientCert},
+		{name: "verify if given", mode: ClientAuthVerifyIfGiven, want: tls.VerifyClientCertIfGiven},
+		{name: "require and verify", mode: ClientAuthRequireAndVerify, want: tls.RequireAndVerifyClientCert},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg, err := ServerConfig(&ServerOptions{
+				Cert:       &Material{InlinePEM: testCertPEM},
+				Key:        &Material{InlinePEM: testKeyPEM},
+				ClientCA:   &Material{InlinePEM: testCertPEM},
+				ClientAuth: tc.mode,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if cfg.ClientAuth != tc.want {
+				t.Fatalf("ClientAuth = %v, want %v", cfg.ClientAuth, tc.want)
+			}
+			if tc.want != tls.NoClientCert && cfg.ClientCAs == nil {
+				t.Fatal("expected client CAs")
+			}
+		})
+	}
+}
+
+func TestServerConfigRejectsUnknownClientAuth(t *testing.T) {
+	testCertPEM, testKeyPEM := selfSignedPEM(t)
+	mode := ClientAuthMode("require-and-verify")
+	_, err := ServerConfig(&ServerOptions{
 		Cert:       &Material{InlinePEM: testCertPEM},
 		Key:        &Material{InlinePEM: testKeyPEM},
 		ClientCA:   &Material{InlinePEM: testCertPEM},
-		ClientAuth: ClientAuthRequireAndVerify,
+		ClientAuth: mode,
 	})
-	if err != nil {
-		t.Fatal(err)
+	if err == nil {
+		t.Fatal("expected error")
 	}
-	if cfg == nil || cfg.ClientAuth != tls.RequireAndVerifyClientCert {
-		t.Fatalf("ClientAuth = %v", cfg.ClientAuth)
-	}
-	if cfg.ClientCAs == nil {
-		t.Fatal("expected client CAs")
+	if !strings.Contains(err.Error(), string(mode)) {
+		t.Fatalf("error %q does not contain mode %q", err, mode)
 	}
 }
 
