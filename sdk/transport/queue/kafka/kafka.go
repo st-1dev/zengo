@@ -339,12 +339,14 @@ func (h consumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, cla
 			if !ok {
 				return nil
 			}
-			h.consumeMessage(sess, msg)
+			if err := h.consumeMessage(sess, msg); err != nil {
+				return err
+			}
 		}
 	}
 }
 
-func (h consumerGroupHandler) consumeMessage(sess sarama.ConsumerGroupSession, msg *sarama.ConsumerMessage) {
+func (h consumerGroupHandler) consumeMessage(sess sarama.ConsumerGroupSession, msg *sarama.ConsumerMessage) error {
 	ctx := observability.ExtractKafkaContext(h.rootCtx, msg.Headers)
 	spanCtx, endSpan := observability.StartSpan(
 		ctx,
@@ -371,7 +373,7 @@ func (h consumerGroupHandler) consumeMessage(sess sarama.ConsumerGroupSession, m
 			err,
 		)
 		sess.MarkMessage(msg, "")
-		return
+		return nil
 	}
 	exec := h.exec
 	if exec == nil {
@@ -393,8 +395,10 @@ func (h consumerGroupHandler) consumeMessage(sess sarama.ConsumerGroupSession, m
 			"err",
 			err,
 		)
+		return err
 	}
 	sess.MarkMessage(msg, "")
+	return nil
 }
 
 func producerHeaders(headers []*sarama.RecordHeader) []sarama.RecordHeader {
