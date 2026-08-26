@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-26-errx-grpc-diagnostics-design.md`
 
+**Issue:** https://github.com/st-1dev/zengo/issues/2
+
 ## Global Constraints
 
 - Public functions and types remain unchanged.
@@ -36,9 +38,9 @@
 - Consumes: `func (e *Error) GRPCStatus() *grpcstatus.Status`, `func FromError(err error) *Error`, `func fromStatus(st *grpcstatus.Status, cause error) *Error`.
 - Produces: outgoing `*grpcstatus.Status` with `codes.Code`, `Status.Message()`, and exactly one `*errdetails.ErrorInfo` containing the stable reason/domain; legacy incoming payloads still produce `*errx.Error` with their message, fields, and stack.
 
-- [ ] **Step 1: Replace the old round-trip expectation and add the outbound and legacy-wire regression tests**
+- [ ] **Step 1: Replace unsafe round-trip expectations and add outbound and legacy-wire regression tests**
 
-Add `"strings"` and `"google.golang.org/genproto/googleapis/rpc/errdetails"` to `sdk/errx/errx_test.go` imports. Replace `TestGRPCRoundTripPreservesDetails` and add the following helpers/tests:
+Add `"strings"` and `"google.golang.org/genproto/googleapis/rpc/errdetails"` to `sdk/errx/errx_test.go` imports. Replace `TestGRPCRoundTripPreservesDetails` and `TestUnaryClientInterceptorDecodesRemoteErrx`, then add the following helpers/tests:
 
 ```go
 func newErrorWithInternalStackMarker() *errx.Error {
@@ -149,13 +151,54 @@ func TestFromErrorDecodesLegacyGRPCDetails(t *testing.T) {
 		t.Fatalf("stack = %#v", stack)
 	}
 }
+
+func TestUnaryClientInterceptorDecodesRemoteErrx(t *testing.T) {
+	interceptor := errx.UnaryClientInterceptor()
+	remote := errx.New(
+		codes.InvalidArgument,
+		"validate create user request",
+		errx.Public("invalid request"),
+		errx.Fields(errx.Field{Key: "field", Value: "email"}),
+	)
+
+	err := interceptor(
+		context.Background(),
+		"/user.v1.UserService/CreateUser",
+		nil,
+		nil,
+		nil,
+		func(context.Context, string, any, any, *grpc.ClientConn, ...grpc.CallOption) error {
+			return remote.GRPCStatus().Err()
+		},
+	)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+
+	appErr := errx.FromError(err)
+	if appErr.Code() != codes.InvalidArgument {
+		t.Fatalf("code = %v", appErr.Code())
+	}
+	if appErr.PublicMessage() != "invalid request" {
+		t.Fatalf("public message = %q", appErr.PublicMessage())
+	}
+	if appErr.Message() != "invalid request" {
+		t.Fatalf("message = %q", appErr.Message())
+	}
+	if fields := appErr.Fields(); len(fields) != 0 {
+		t.Fatalf("fields = %#v", fields)
+	}
+	if stack := appErr.StackTrace(); len(stack) != 0 {
+		t.Fatalf("stack = %#v", stack)
+	}
+}
 ```
 
 - [ ] **Step 2: Run the focused tests to verify the current outbound encoding fails**
 
-Run: `go test ./sdk/errx -run '^(TestGRPCStatusDoesNotExposeInternalDiagnostics|TestGRPCRoundTripPreservesPublicDetails|TestFromErrorDecodesLegacyGRPCDetails)$' -count=1`
+Run: `go test ./sdk/errx -run '^(TestGRPCStatusDoesNotExposeInternalDiagnostics|TestGRPCRoundTripPreservesPublicDetails|TestFromErrorDecodesLegacyGRPCDetails|TestUnaryClientInterceptorDecodesRemoteErrx)$' -count=1`
 
-Expected: RED — `TestGRPCStatusDoesNotExposeInternalDiagnostics` reports the unexpected `DebugInfo` or non-empty `ErrorInfo.Metadata`; the legacy decoder test is already green.
+Expected: RED — outbound and client-interceptor tests expose the current internal metadata/stack; the legacy decoder test is already green.
 
 - [ ] **Step 3: Replace the outbound details construction with the minimal public payload**
 
@@ -184,7 +227,7 @@ Expected: `gofmt` completes without output.
 
 - [ ] **Step 4: Run the focused tests to verify the public-only wire contract**
 
-Run: `go test ./sdk/errx -run '^(TestGRPCStatusDoesNotExposeInternalDiagnostics|TestGRPCRoundTripPreservesPublicDetails|TestFromErrorDecodesLegacyGRPCDetails)$' -count=1`
+Run: `go test ./sdk/errx -run '^(TestGRPCStatusDoesNotExposeInternalDiagnostics|TestGRPCRoundTripPreservesPublicDetails|TestFromErrorDecodesLegacyGRPCDetails|TestUnaryClientInterceptorDecodesRemoteErrx)$' -count=1`
 
 Expected: GREEN — the outgoing status has only public code/message and stable `ErrorInfo`; a new-status decode restores no internal fields or stack; the manually built legacy status still restores them.
 
