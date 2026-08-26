@@ -58,7 +58,12 @@ func TestWrapCapturesMessageAndPublicMessages(t *testing.T) {
 }
 
 func newErrorWithInternalStackMarker() *errx.Error {
-	return errx.New(codes.Unavailable, "internal-message-secret-marker", errx.Public("service temporarily unavailable"), errx.Fields(errx.Field{Key: "field-secret-marker", Value: "value-secret-marker"}))
+	return errx.New(
+		codes.Unavailable,
+		"internal-message-secret-marker",
+		errx.Public("service temporarily unavailable"),
+		errx.Fields(errx.Field{Key: "field-secret-marker", Value: "value-secret-marker"}),
+	)
 }
 
 func TestGRPCStatusDoesNotExposeInternalDiagnostics(t *testing.T) {
@@ -69,7 +74,8 @@ func TestGRPCStatusDoesNotExposeInternalDiagnostics(t *testing.T) {
 	if appErr.Message() != "internal-message-secret-marker" {
 		t.Fatalf("local message = %q", appErr.Message())
 	}
-	if fields := appErr.Fields(); len(fields) != 1 || fields[0] != (errx.Field{Key: "field-secret-marker", Value: "value-secret-marker"}) {
+	if fields := appErr.Fields(); len(fields) != 1 ||
+		fields[0] != (errx.Field{Key: "field-secret-marker", Value: "value-secret-marker"}) {
 		t.Fatalf("local fields = %#v", fields)
 	}
 	st := appErr.GRPCStatus()
@@ -122,7 +128,18 @@ func TestGRPCRoundTripPreservesPublicDetails(t *testing.T) {
 
 func TestFromErrorDecodesLegacyGRPCDetails(t *testing.T) {
 	st := grpcstatus.New(codes.InvalidArgument, "legacy public message")
-	legacy, err := st.WithDetails(&errdetails.ErrorInfo{Reason: "APPLICATION_ERROR", Domain: "zengo.platform/sdk/errx", Metadata: map[string]string{"message": "legacy internal message", "public_message": "legacy public message", "field.field": "email"}}, &errdetails.DebugInfo{StackEntries: []string{"legacy stack entry"}, Detail: "legacy debug detail"})
+	legacy, err := st.WithDetails(
+		&errdetails.ErrorInfo{
+			Reason: "APPLICATION_ERROR",
+			Domain: "zengo.platform/sdk/errx",
+			Metadata: map[string]string{
+				"message":        "legacy internal message",
+				"public_message": "legacy public message",
+				"field.field":    "email",
+			},
+		},
+		&errdetails.DebugInfo{StackEntries: []string{"legacy stack entry"}, Detail: "legacy debug detail"},
+	)
 	if err != nil {
 		t.Fatalf("build legacy status: %v", err)
 	}
