@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"zengo/platform/sdk/router"
 
 	"github.com/IBM/sarama"
-
-	"zengo/platform/sdk/router"
 )
 
 type fakeConsumerGroupSession struct {
