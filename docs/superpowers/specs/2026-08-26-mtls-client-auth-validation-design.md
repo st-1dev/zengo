@@ -12,7 +12,7 @@
 
 Практический риск: опечатка вроде `require-and-verify` молча отключает ожидаемую mTLS-аутентификацию.
 
-Текущий источник: `sdk/tlsconfig/tlsconfig.go`, функции `validateServerOptions`, `effectiveClientAuth` и `NewServer`.
+Текущий источник: `sdk/tlsconfig/tlsconfig.go`, функции `validateServerOptions`, `effectiveClientAuth` и `ServerConfig`.
 
 ## Решение
 
