@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-26-server-handler-retries-design.md`
 
+**Issue:** https://github.com/st-1dev/zengo/issues/3
+
 ## Global Constraints
 
 - Public signatures remain unchanged.
