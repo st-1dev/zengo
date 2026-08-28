@@ -13,6 +13,13 @@ func TestInitServiceSkipsDuplicateHubAndThirdPartyTemplates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	goMod, err := os.ReadFile(filepath.Join(dir, "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(goMod), "google.golang.org/grpc v1.82.1") {
+		t.Fatalf("generated go.mod does not contain grpc v1.82.1:\n%s", goMod)
+	}
 
 	_, err = os.Stat(filepath.Join(dir, "api", "hub", "demo", "demo.proto"))
 	if !os.IsNotExist(err) {
