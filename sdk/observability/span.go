@@ -32,7 +32,11 @@ func StartSpan(ctx context.Context, attributes ...Attribute) (spanCtx context.Co
 //
 // The returned context carries the new span.
 // Call the returned SpanEndFunc to avoid leaving spans open.
-func StartSpanNamed(ctx context.Context, title string, attributes ...Attribute) (spanCtx context.Context, spanEndFunc SpanEndFunc) {
+func StartSpanNamed(
+	ctx context.Context,
+	title string,
+	attributes ...Attribute,
+) (spanCtx context.Context, spanEndFunc SpanEndFunc) {
 	tr := loadTracer()
 	if tr == nil {
 		return ctx, func() {}

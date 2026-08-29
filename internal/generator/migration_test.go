@@ -69,7 +69,9 @@ func TestGeneratePostgresMigrationAtRewritesManagedFile(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
 	writeRepositorySchemaFile(t, root, RepositorySchemaManifest{
-		Repositories: []RepositorySchema{{Table: "users", Columns: []RepositoryColumn{{Name: "id", SQLType: "TEXT", PrimaryKey: true}}}},
+		Repositories: []RepositorySchema{
+			{Table: "users", Columns: []RepositoryColumn{{Name: "id", SQLType: "TEXT", PrimaryKey: true}}},
+		},
 	})
 	path := PostgresMigrationPathAt(root)
 	err := os.MkdirAll(filepath.Dir(path), 0o755)
@@ -95,7 +97,9 @@ func TestGeneratePostgresMigrationAtPreservesManualFile(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
 	writeRepositorySchemaFile(t, root, RepositorySchemaManifest{
-		Repositories: []RepositorySchema{{Table: "users", Columns: []RepositoryColumn{{Name: "id", SQLType: "TEXT", PrimaryKey: true}}}},
+		Repositories: []RepositorySchema{
+			{Table: "users", Columns: []RepositoryColumn{{Name: "id", SQLType: "TEXT", PrimaryKey: true}}},
+		},
 	})
 	path := PostgresMigrationPathAt(root)
 	err := os.MkdirAll(filepath.Dir(path), 0o755)
@@ -124,7 +128,9 @@ func TestShouldTrackPostgresMigrationAt(t *testing.T) {
 	t.Run("missing managed migration with schema", func(t *testing.T) {
 		root := t.TempDir()
 		writeRepositorySchemaFile(t, root, RepositorySchemaManifest{
-			Repositories: []RepositorySchema{{Table: "users", Columns: []RepositoryColumn{{Name: "id", SQLType: "TEXT", PrimaryKey: true}}}},
+			Repositories: []RepositorySchema{
+				{Table: "users", Columns: []RepositoryColumn{{Name: "id", SQLType: "TEXT", PrimaryKey: true}}},
+			},
 		})
 		track, err := ShouldTrackPostgresMigrationAt(root, m)
 		if err != nil {
@@ -137,7 +143,9 @@ func TestShouldTrackPostgresMigrationAt(t *testing.T) {
 	t.Run("manual migration", func(t *testing.T) {
 		root := t.TempDir()
 		writeRepositorySchemaFile(t, root, RepositorySchemaManifest{
-			Repositories: []RepositorySchema{{Table: "users", Columns: []RepositoryColumn{{Name: "id", SQLType: "TEXT", PrimaryKey: true}}}},
+			Repositories: []RepositorySchema{
+				{Table: "users", Columns: []RepositoryColumn{{Name: "id", SQLType: "TEXT", PrimaryKey: true}}},
+			},
 		})
 		path := PostgresMigrationPathAt(root)
 		err := os.MkdirAll(filepath.Dir(path), 0o755)

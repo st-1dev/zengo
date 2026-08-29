@@ -304,7 +304,7 @@ func Float64SliceAttribute(key string, value []float64) (attr Attribute) {
 }
 
 // StringAttribute returns a string attribute.
-func StringAttribute(key string, value string) (attr Attribute) {
+func StringAttribute(key, value string) (attr Attribute) {
 	return Attribute{
 		transform: func() (kv attribute.KeyValue) {
 			return attribute.String(key, value)
@@ -380,7 +380,7 @@ func isNil(x any) (flag bool) {
 		return true
 	}
 	v := reflect.ValueOf(x)
-	switch v.Kind() { //nolint:exhaustive
+	switch v.Kind() { //nolint:exhaustive // only pointer-like kinds can be nil here
 	case reflect.Pointer, reflect.UnsafePointer, reflect.Interface:
 		return v.IsNil()
 	default:

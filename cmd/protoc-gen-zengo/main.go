@@ -12,9 +12,7 @@ import (
 
 // main runs the custom protoc plugin that generates grpc-gateway and runtime helpers.
 func main() {
-	protogen.Options{}.Run(func(gen *protogen.Plugin) error {
-		return runPlugin(gen)
-	})
+	protogen.Options{}.Run(runPlugin)
 }
 
 func runPlugin(gen *protogen.Plugin) error {

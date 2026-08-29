@@ -10,10 +10,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func ptr[T any](v T) *T {
-	return &v
-}
-
 func TestAttribute_toOpenTelemetry_AllTypes(t *testing.T) {
 	tests := []struct {
 		expected attribute.KeyValue
@@ -42,7 +38,7 @@ func TestAttribute_toOpenTelemetry_AllTypes(t *testing.T) {
 		},
 		{
 			name:     "null bool value",
-			attr:     NullBoolAttribute("flag", ptr(true)),
+			attr:     NullBoolAttribute("flag", new(true)),
 			expected: attribute.Bool("flag", true),
 		},
 		{
@@ -72,7 +68,7 @@ func TestAttribute_toOpenTelemetry_AllTypes(t *testing.T) {
 		},
 		{
 			name:     "null int8 value",
-			attr:     NullInt8Attribute("count", ptr(int8(8))),
+			attr:     NullInt8Attribute("count", new(int8(8))),
 			expected: attribute.Int("count", 8),
 		},
 		{
@@ -92,7 +88,7 @@ func TestAttribute_toOpenTelemetry_AllTypes(t *testing.T) {
 		},
 		{
 			name:     "null int16 value",
-			attr:     NullInt16Attribute("count", ptr(int16(16))),
+			attr:     NullInt16Attribute("count", new(int16(16))),
 			expected: attribute.Int("count", 16),
 		},
 		{
@@ -112,7 +108,7 @@ func TestAttribute_toOpenTelemetry_AllTypes(t *testing.T) {
 		},
 		{
 			name:     "null int32 value",
-			attr:     NullInt32Attribute("count", ptr(int32(32))),
+			attr:     NullInt32Attribute("count", new(int32(32))),
 			expected: attribute.Int("count", 32),
 		},
 		{
@@ -132,7 +128,7 @@ func TestAttribute_toOpenTelemetry_AllTypes(t *testing.T) {
 		},
 		{
 			name:     "null int64 value",
-			attr:     NullInt64Attribute("count", ptr(int64(64))),
+			attr:     NullInt64Attribute("count", new(int64(64))),
 			expected: attribute.Int64("count", 64),
 		},
 		{
@@ -142,7 +138,7 @@ func TestAttribute_toOpenTelemetry_AllTypes(t *testing.T) {
 		},
 		{
 			name:     "null int value",
-			attr:     NullIntAttribute("count", ptr(42)),
+			attr:     NullIntAttribute("count", new(42)),
 			expected: attribute.Int("count", 42),
 		},
 		{
@@ -162,7 +158,7 @@ func TestAttribute_toOpenTelemetry_AllTypes(t *testing.T) {
 		},
 		{
 			name:     "null uint8 value",
-			attr:     NullUint8Attribute("count", ptr(uint8(8))),
+			attr:     NullUint8Attribute("count", new(uint8(8))),
 			expected: attribute.Int("count", 8),
 		},
 		{
@@ -182,7 +178,7 @@ func TestAttribute_toOpenTelemetry_AllTypes(t *testing.T) {
 		},
 		{
 			name:     "null uint16 value",
-			attr:     NullUint16Attribute("count", ptr(uint16(16))),
+			attr:     NullUint16Attribute("count", new(uint16(16))),
 			expected: attribute.Int("count", 16),
 		},
 		{
@@ -202,7 +198,7 @@ func TestAttribute_toOpenTelemetry_AllTypes(t *testing.T) {
 		},
 		{
 			name:     "null uint32 value",
-			attr:     NullUint32Attribute("count", ptr(uint32(32))),
+			attr:     NullUint32Attribute("count", new(uint32(32))),
 			expected: attribute.Int64("count", 32),
 		},
 		{
@@ -222,7 +218,7 @@ func TestAttribute_toOpenTelemetry_AllTypes(t *testing.T) {
 		},
 		{
 			name:     "null float32 value",
-			attr:     NullFloat32Attribute("rate", ptr(float32(3.5))),
+			attr:     NullFloat32Attribute("rate", new(float32(3.5))),
 			expected: attribute.Float64("rate", 3.5),
 		},
 		{
@@ -242,7 +238,7 @@ func TestAttribute_toOpenTelemetry_AllTypes(t *testing.T) {
 		},
 		{
 			name:     "null float64 value",
-			attr:     NullFloat64Attribute("rate", ptr(6.25)),
+			attr:     NullFloat64Attribute("rate", new(6.25)),
 			expected: attribute.Float64("rate", 6.25),
 		},
 		{
@@ -262,7 +258,7 @@ func TestAttribute_toOpenTelemetry_AllTypes(t *testing.T) {
 		},
 		{
 			name:     "null string value",
-			attr:     NullStringAttribute("name", ptr("hello")),
+			attr:     NullStringAttribute("name", new("hello")),
 			expected: attribute.String("name", "hello"),
 		},
 		{

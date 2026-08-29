@@ -12,9 +12,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 
+	"zengo/platform/sdk/transport/queue/kafka"
 	"zengo/platform/sdk/policy"
 	"zengo/platform/sdk/router"
-	"zengo/platform/sdk/transport/queue/kafka"
 )
 
 func RegisterGRPCUserHub(server *grpc.Server, handler user.UserServiceServer) {

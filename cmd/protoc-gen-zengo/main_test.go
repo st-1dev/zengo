@@ -116,7 +116,18 @@ func TestRunPlugin_ErrorsOnInvalidPrimaryKey(t *testing.T) {
 func TestRunPlugin_ErrorsOnDuplicateTables(t *testing.T) {
 	t.Parallel()
 	left := repositoryHubFile(t, repositoryHubFileOptions{})
-	right := repositoryHubFile(t, repositoryHubFileOptions{fileName: "api/hub/account/service.proto", packageName: "account.hub", goPackage: "example.com/demo/gen/api/hub/account;accounthub", serviceName: "AccountService", table: "users", entity: "account", model: "AccountRecord"})
+	right := repositoryHubFile(
+		t,
+		repositoryHubFileOptions{
+			fileName:    "api/hub/account/service.proto",
+			packageName: "account.hub",
+			goPackage:   "example.com/demo/gen/api/hub/account;accounthub",
+			serviceName: "AccountService",
+			table:       "users",
+			entity:      "account",
+			model:       "AccountRecord",
+		},
+	)
 	_, err := runPluginForFilesWithError(left, right)
 	if err == nil {
 		t.Fatal("expected error")
@@ -202,24 +213,24 @@ func repositoryHubFile(t *testing.T, opts repositoryHubFileOptions) *descriptorp
 		fields = append(fields, repeatedStringField(t, "aliases", 5, nil))
 	}
 	modelMessage := &descriptorpb.DescriptorProto{
-		Name:  stringPtr(model),
+		Name:  new(model),
 		Field: fields,
 	}
 	apiMessage := &descriptorpb.DescriptorProto{
-		Name: stringPtr("User"),
+		Name: new("User"),
 		Field: []*descriptorpb.FieldDescriptorProto{
 			stringField(t, "id", 1, nil),
 		},
 	}
 	service := &descriptorpb.ServiceDescriptorProto{
-		Name:    stringPtr(serviceName),
+		Name:    new(serviceName),
 		Options: serviceOptions,
 	}
 	return &descriptorpb.FileDescriptorProto{
-		Name:    stringPtr(fileName),
-		Package: stringPtr(packageName),
-		Syntax:  stringPtr("proto3"),
-		Options: &descriptorpb.FileOptions{GoPackage: stringPtr(goPackage)},
+		Name:    new(fileName),
+		Package: new(packageName),
+		Syntax:  new("proto3"),
+		Options: &descriptorpb.FileOptions{GoPackage: new(goPackage)},
 		MessageType: []*descriptorpb.DescriptorProto{
 			apiMessage,
 			modelMessage,
@@ -233,16 +244,16 @@ func repositoryV1File(t *testing.T) *descriptorpb.FileDescriptorProto {
 	serviceOptions := &descriptorpb.ServiceOptions{}
 	setServiceRepositoryExtension(t, serviceOptions, &options.Repository{Entity: "user", Table: "users"})
 	service := &descriptorpb.ServiceDescriptorProto{
-		Name:    stringPtr("UserService"),
+		Name:    new("UserService"),
 		Options: serviceOptions,
 	}
 	return &descriptorpb.FileDescriptorProto{
-		Name:        stringPtr("api/v1/user/service.proto"),
-		Package:     stringPtr("user.v1"),
-		Syntax:      stringPtr("proto3"),
-		Options:     &descriptorpb.FileOptions{GoPackage: stringPtr("example.com/demo/gen/api/v1/user;userv1")},
+		Name:        new("api/v1/user/service.proto"),
+		Package:     new("user.v1"),
+		Syntax:      new("proto3"),
+		Options:     &descriptorpb.FileOptions{GoPackage: new("example.com/demo/gen/api/v1/user;userv1")},
 		Service:     []*descriptorpb.ServiceDescriptorProto{service},
-		MessageType: []*descriptorpb.DescriptorProto{{Name: stringPtr("User")}},
+		MessageType: []*descriptorpb.DescriptorProto{{Name: new("User")}},
 	}
 }
 
@@ -276,7 +287,11 @@ func newPluginForFiles(files ...*descriptorpb.FileDescriptorProto) (*protogen.Pl
 	return protogen.Options{}.New(request)
 }
 
-func responseFileByName(t *testing.T, response *pluginpb.CodeGeneratorResponse, name string) *pluginpb.CodeGeneratorResponse_File {
+func responseFileByName(
+	t *testing.T,
+	response *pluginpb.CodeGeneratorResponse,
+	name string,
+) *pluginpb.CodeGeneratorResponse_File {
 	t.Helper()
 	for _, file := range response.File {
 		if file.GetName() == name {
@@ -299,11 +314,11 @@ func stringField(
 		setFieldColumnExtension(t, optionsData, column)
 	}
 	return &descriptorpb.FieldDescriptorProto{
-		Name:     stringPtr(name),
-		Number:   int32Ptr(number),
-		Label:    labelPtr(descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL),
-		Type:     typePtr(descriptorpb.FieldDescriptorProto_TYPE_STRING),
-		JsonName: stringPtr(name),
+		Name:     new(name),
+		Number:   new(number),
+		Label:    new(descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL),
+		Type:     new(descriptorpb.FieldDescriptorProto_TYPE_STRING),
+		JsonName: new(name),
 		Options:  optionsData,
 	}
 }
@@ -320,11 +335,11 @@ func repeatedStringField(
 		setFieldColumnExtension(t, optionsData, column)
 	}
 	return &descriptorpb.FieldDescriptorProto{
-		Name:     stringPtr(name),
-		Number:   int32Ptr(number),
-		Label:    labelPtr(descriptorpb.FieldDescriptorProto_LABEL_REPEATED),
-		Type:     typePtr(descriptorpb.FieldDescriptorProto_TYPE_STRING),
-		JsonName: stringPtr(name),
+		Name:     new(name),
+		Number:   new(number),
+		Label:    new(descriptorpb.FieldDescriptorProto_LABEL_REPEATED),
+		Type:     new(descriptorpb.FieldDescriptorProto_TYPE_STRING),
+		JsonName: new(name),
 		Options:  optionsData,
 	}
 }
@@ -337,20 +352,4 @@ func setServiceRepositoryExtension(t *testing.T, opts *descriptorpb.ServiceOptio
 func setFieldColumnExtension(t *testing.T, opts *descriptorpb.FieldOptions, column *options.Column) {
 	t.Helper()
 	proto.SetExtension(opts, options.E_Column, column)
-}
-
-func stringPtr(value string) *string {
-	return &value
-}
-
-func int32Ptr(value int32) *int32 {
-	return &value
-}
-
-func labelPtr(value descriptorpb.FieldDescriptorProto_Label) *descriptorpb.FieldDescriptorProto_Label {
-	return &value
-}
-
-func typePtr(value descriptorpb.FieldDescriptorProto_Type) *descriptorpb.FieldDescriptorProto_Type {
-	return &value
 }
