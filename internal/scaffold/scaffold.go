@@ -44,6 +44,19 @@ func ParseManifestFormat(raw string) (ManifestFormat, error) {
 // InitService creates a new service repository from embedded scaffold templates.
 func InitService(name, dir string, opts InitOptions) error {
 	targetDir := filepath.Clean(dir)
+	absTarget, err := filepath.Abs(targetDir)
+	if err != nil {
+		return fmt.Errorf("resolve init target %q: %w", targetDir, err)
+	}
+	platformRoot, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("resolve platform root: %w", err)
+	}
+	platformReplace, err := filepath.Rel(absTarget, platformRoot)
+	if err != nil {
+		return fmt.Errorf("resolve platform replace: %w", err)
+	}
+	platformReplace = filepath.ToSlash(platformReplace)
 	entries, err := os.ReadDir(targetDir)
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("inspect init target %q: %w", targetDir, err)
@@ -64,7 +77,7 @@ func InitService(name, dir string, opts InitOptions) error {
 		"{{MODULE}}", module,
 		"{{HANDLER_PKG}}", handlerPkg,
 		"{{HANDLER_TITLE}}", handlerTitle,
-		"{{PLATFORM_REPLACE}}", "../..",
+		"{{PLATFORM_REPLACE}}", platformReplace,
 	)
 	return fs.WalkDir(templates, "templates", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
