@@ -182,3 +182,33 @@ func TestInitServiceCreatesMissingTarget(t *testing.T) {
 		t.Fatalf("expected zengo.textproto: %v", err)
 	}
 }
+
+func TestInitServiceSetsPlatformReplaceRelativeToTarget(t *testing.T) {
+	platformRoot := t.TempDir()
+	t.Chdir(platformRoot)
+
+	tests := []struct {
+		name   string
+		target string
+		want   string
+	}{
+		{name: "direct child", target: "service", want: ".."},
+		{name: "nested target", target: filepath.Join("examples", "service"), want: "../.."},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := InitService("demo-service", tt.target, InitOptions{}); err != nil {
+				t.Fatal(err)
+			}
+			goMod, err := os.ReadFile(filepath.Join(platformRoot, tt.target, "go.mod"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := "replace zengo/platform => " + tt.want
+			if got := string(goMod); !strings.Contains("\n"+got+"\n", "\n"+want+"\n") {
+				t.Fatalf("generated go.mod does not contain %q:\n%s", want, got)
+			}
+		})
+	}
+}
